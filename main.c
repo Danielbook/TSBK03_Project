@@ -38,9 +38,9 @@ mat4 projectionMatrix;
 
 // Globals
 // * Model(s)
-Model *bunny;
+Model *planet;
 // * Reference(s) to shader program(s)
-GLuint program;
+GLuint phongShader;
 // * Texture(s)
 GLuint texture;
 
@@ -52,68 +52,64 @@ void init(void)
     glClearColor(0.2,0.2,0.5,0);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
-    printError("GL inits");
 
-    projectionMatrix = perspective(90, 1.0, 0.1, 1000);
-    viewMatrix = lookAt(0,0,1.5, 0,0,0, 0,1,0);
+    projectionMatrix = frustum(-0.5, 0.5, -0.5, 0.5, 1.0, 300.0);
 
     // Load and compile shader
-    program = loadShaders("../lab0.vert", "../lab0.frag");
-    printError("init shader");
+    phongShader = loadShaders("../phong.vert", "../phong.frag");
 
     // Upload geometry to the GPU:
-    bunny = LoadModelPlus("../objects/stanford-bunny.obj");
-    printError("load models");
+    planet = LoadModelPlus("../assets/sphere.obj"); // Sphere
 
-    // Load textures
-    LoadTGATextureSimple("../textures/maskros512.tga",&texture);
-    printError("load textures");
+    // Important! The shader we upload to must be active!
+    glUseProgram(phongShader);
+    glUniformMatrix4fv(glGetUniformLocation(phongShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+
+    printError("init arrays");
+
 }
 
+GLfloat a = 0.0;
 
 void display(void)
 {
-    GLfloat time = (GLfloat) glutGet(GLUT_ELAPSED_TIME);
     printError("pre display");
 
     // clear the screen
-    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    //Translation
-    float theta = 0.001 * time;
+    mat4 worldToView, m; // m1, m2, m, tr, scale;
 
-    mat4 rotateYMatrix = {{ cos(theta),		 0.0, sin(theta), 	0.0,
-                                  0.0, 		 1.0, 0.0, 			0.0,
-                                  -sin(theta), 0.0, cos(theta), 	0.0,
-                                  0.0, 		 0.0, 0.0, 			1.0}};
+    worldToView = lookAt(0,0,4, 0,0,0, 0,1,0);
 
-    mat4 translateXMatrix = {{ 	1.0, 0.0, 0.0, 0.0,
-                                     0.0, 1.0, 0.0, 0.0,
-                                     0.0, 0.0, 1.0, -1.0,
-                                     0.0, 0.0, 0.0, 1.0}};
+    a += 0.03;
 
-    mat4 objectExampleMatrix = Mult(translateXMatrix, rotateYMatrix);
+    mat4 A, B, C, D, E;
+    float xs = 0.0;
+    float ys = 0.0;
+    float zs = 0.0;
+    float b = -a*2;
+    float c = a*5;
+    float d = a*15;
+    float rp = 2;
+    float rm = 0.5;
 
+// Calculate matrices in matrix sequences that impose the dependencies.
 
+    mat4 CAM = lookAt(0,4,4, 0,0,0, 0,1,0);
+    A = Mult(CAM, T(xs, ys, zs));
+    B = Mult(A, Mult(Ry(a), T(rp, 0, 0))); // Planet position
+    C = Mult(B, Mult(Ry( c ), T(rm, 0, 0))); // Moon position
+    D = Mult(B, Mult(Ry(b), S(0.3, 0.3, 0.3))); // Planet pos + rotation
+    E = Mult(C, Mult(Ry(d), S(0.2, 0.2, 0.2))); // Moon pos + rotation
 
+    glUseProgram(phongShader);
+    glUniformMatrix4fv(glGetUniformLocation(phongShader, "modelviewMatrix"), 1, GL_TRUE, A.m);
+    DrawModel(planet, phongShader, "inPosition", "inNormal", NULL);
 
-    //activate the program, and set its variables
-    glUseProgram(program);
-    glUniformMatrix4fv(glGetUniformLocation(program, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
-    mat4 m = Mult(viewMatrix, objectExampleMatrix);
-
-    glUniformMatrix4fv(glGetUniformLocation(program, "viewMatrix"), 1, GL_TRUE, m.m);
-
-    glUniform1f(glGetUniformLocation(program, "time"), time);
-
-    // Add light source
-    vec3 light1 = {1.0, 0.0, 0.0};
-    glUniform3f(glGetUniformLocation(program, "lightPos"), light1.x, light1.y, light1.z);
-
-
-    //draw the model
-    DrawModel(bunny, program, "in_Position", "in_Normal", NULL);
+    glUseProgram(phongShader);
+    glUniformMatrix4fv(glGetUniformLocation(phongShader, "modelviewMatrix"), 1, GL_TRUE, D.m);
+    DrawModel(planet, phongShader, "inPosition", "inNormal", NULL);
 
     printError("display");
 
@@ -132,3 +128,4 @@ int main(int argc, char *argv[])
     glutMainLoop();
     exit(0);
 }
+
