@@ -11,13 +11,16 @@
 // Mac: gcc lab0.c ../common/*.c ../common/Mac/MicroGlut.m -o lab0 -framework OpenGL -framework Cocoa -I../common/Mac -I../common
 
 #ifdef __APPLE__
+
 #include <OpenGL/gl3.h>
 #include "MicroGlut.h"
+#include "noise1234.h"
 //uses framework Cocoa
 #else
 #include <GL/gl.h>
-	#include "MicroGlut.h"
+#include "MicroGlut.h"
 #endif
+
 #include "GL_utilities.h"
 #include "VectorUtils3.h"
 #include "loadobj.h"
@@ -25,7 +28,7 @@
 #include "LoadTGA.h"
 
 //constants
-const int initWidth=512,initHeight=512;
+const int initWidth = 512, initHeight = 512;
 
 // Model-to-world matrix
 // Modify this matrix.
@@ -40,16 +43,15 @@ mat4 projectionMatrix;
 // * Model(s)
 Model *planet;
 // * Reference(s) to shader program(s)
-GLuint phongShader;
+GLuint phongShader, planetShader;
 // * Texture(s)
 GLuint texture;
 
-void init(void)
-{
+void init(void) {
     dumpInfo();
 
     // GL inits
-    glClearColor(0.2,0.2,0.5,0);
+    glClearColor(0.2, 0.2, 0.5, 0);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
 
@@ -57,22 +59,21 @@ void init(void)
 
     // Load and compile shader
     phongShader = loadShaders("../phong.vert", "../phong.frag");
+    planetShader = loadShaders("../shaders/planet.vert", "../shaders/planet.frag");
 
     // Upload geometry to the GPU:
     planet = LoadModelPlus("../assets/sphere.obj"); // Sphere
 
     // Important! The shader we upload to must be active!
-    glUseProgram(phongShader);
+    glUseProgram(planetShader);
     glUniformMatrix4fv(glGetUniformLocation(phongShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
 
     printError("init arrays");
-
 }
 
 GLfloat a = 0.0;
 
-void display(void)
-{
+void display(void) {
     printError("pre display");
 
     // clear the screen
@@ -80,51 +81,49 @@ void display(void)
 
     mat4 worldToView, m; // m1, m2, m, tr, scale;
 
-    worldToView = lookAt(0,0,4, 0,0,0, 0,1,0);
+    worldToView = lookAt(0, 0, 4, 0, 0, 0, 0, 1, 0);
 
     a += 0.03;
 
-    mat4 A, B, C, D, E;
+    mat4 sunPos, planetPos, moonPos, planetRotPos, moonRotPos;
     float xs = 0.0;
     float ys = 0.0;
     float zs = 0.0;
-    float b = -a*2;
-    float c = a*5;
-    float d = a*15;
+    float b = -a * 2;
+    float c = a * 5;
+    float d = a * 15;
     float rp = 2;
     float rm = 0.5;
 
-// Calculate matrices in matrix sequences that impose the dependencies.
-
-    mat4 CAM = lookAt(0,4,4, 0,0,0, 0,1,0);
-    A = Mult(CAM, T(xs, ys, zs));
-    B = Mult(A, Mult(Ry(a), T(rp, 0, 0))); // Planet position
-    C = Mult(B, Mult(Ry( c ), T(rm, 0, 0))); // Moon position
-    D = Mult(B, Mult(Ry(b), S(0.3, 0.3, 0.3))); // Planet pos + rotation
-    E = Mult(C, Mult(Ry(d), S(0.2, 0.2, 0.2))); // Moon pos + rotation
-
-    glUseProgram(phongShader);
-    glUniformMatrix4fv(glGetUniformLocation(phongShader, "modelviewMatrix"), 1, GL_TRUE, A.m);
-    DrawModel(planet, phongShader, "inPosition", "inNormal", NULL);
+    // Calculate matrices in matrix sequences that impose the dependencies.
+    mat4 CAM = lookAt(0, 4, 4, 0, 0, 0, 0, 1, 0);
+    sunPos = Mult(CAM, T(xs, ys, zs));
+    planetPos = Mult(sunPos, Mult(Ry(a), T(rp, 0, 0))); // Planet position
+    moonPos = Mult(planetPos, Mult(Ry(c), T(rm, 0, 0))); // Moon position
+    planetRotPos = Mult(planetPos, Mult(Ry(b), S(0.3, 0.3, 0.3))); // Planet pos + rotation
+    moonRotPos = Mult(moonPos, Mult(Ry(d), S(0.2, 0.2, 0.2))); // Moon pos + rotation
 
     glUseProgram(phongShader);
-    glUniformMatrix4fv(glGetUniformLocation(phongShader, "modelviewMatrix"), 1, GL_TRUE, D.m);
+    glUniformMatrix4fv(glGetUniformLocation(phongShader, "modelviewMatrix"), 1, GL_TRUE, sunPos.m);
     DrawModel(planet, phongShader, "inPosition", "inNormal", NULL);
+
+    glUseProgram(planetShader);
+    glUniformMatrix4fv(glGetUniformLocation(planetShader, "modelviewMatrix"), 1, GL_TRUE, planetRotPos.m);
+    DrawModel(planet, planetShader, "inPosition", "inNormal", NULL);
 
     printError("display");
 
     glutSwapBuffers();
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_RGBA|GLUT_DEPTH|GLUT_DOUBLE);
+    glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE);
     glutInitContextVersion(3, 2);
-    glutCreateWindow ("Lab 0 - OpenGL 3.2+ Introduction");
+    glutCreateWindow("TSBK03 Project");
     glutDisplayFunc(display);
     glutRepeatingTimer(20);
-    init ();
+    init();
     glutMainLoop();
     exit(0);
 }

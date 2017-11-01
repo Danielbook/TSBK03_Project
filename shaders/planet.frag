@@ -1,6 +1,7 @@
-varying vec3 vNormal;
-varying vec3 pos;
-varying float noise;
+#version 150
+in vec3 vNormal;
+in vec3 inPosition;
+in float noise;
 
 uniform float mountAmp;
 uniform vec3 surfaceColor;
@@ -8,6 +9,8 @@ uniform vec3 lightPos;
 uniform vec3 cameraPos;
 uniform vec3 shoreColor;
 uniform float avgTemp;
+
+out vec4 outColor;
 
 void main() {
   vec3 snowColor = vec3(0.8, 0.9, 1.0);
@@ -28,13 +31,13 @@ void main() {
   finalColor=mix(finalColor, snowColor, smoothstep(avgTemp, avgTemp+7.0, noise));
 
   // Low freq noise
-  finalColor=finalColor-0.04*pnoise(1.0*pos, vec3(10.0));
+  finalColor=finalColor-0.04*pnoise(1.0*inPosition, vec3(10.0));
 
   vec3 ambient = ka * finalColor;
   vec3 diffuse = kd * finalColor * max(0.0, dot(vNormal, light));
 
   finalColor = ambient+diffuse;
 
-  gl_FragColor = vec4(finalColor, 1.0);
+  outColor = vec4(finalColor, 1.0);
 }
 

@@ -7,8 +7,8 @@ set(CMAKE_CXX_STANDARD 11)
 if (APPLE)
     message("Using CMake config for Mac")
 
-    set(INCLUDE_DIRS common common/Mac)
-    file(GLOB SOURCE_FILES main.c common/*.c common/Mac/MicroGlut.m)
+    set(INCLUDE_DIRS common common/Mac shaders/perlin-noise/src)
+    file(GLOB SOURCE_FILES main.c common/*.c common/Mac/MicroGlut.m noise1234.c)
 
     find_package(OpenGL)
     if (NOT ${OPENGL_FOUND})
