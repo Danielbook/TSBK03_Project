@@ -43,21 +43,28 @@ mat4 projectionMatrix;
 // * Model(s)
 Model *planet;
 // * Reference(s) to shader program(s)
-GLuint phongShader, planetShader;
+GLuint phongShader, planetShader, pnoiseShader;
 // * Texture(s)
 GLuint texture;
 
-void init(void) {
+GLuint phongShader, pnoiseShader, testShader;
+// * Texture(s)
+GLuint texture;
+
+double t;
+
+void init(void)
+{
     dumpInfo();
 
     // GL inits
     glClearColor(0.2, 0.2, 0.5, 0);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
-
     projectionMatrix = frustum(-0.5, 0.5, -0.5, 0.5, 1.0, 300.0);
 
     // Load and compile shader
+    pnoiseShader = loadShaders("../classicnoise3D.vert","../classicnoise3D.frag");
     phongShader = loadShaders("../phong.vert", "../phong.frag");
     planetShader = loadShaders("../shaders/planet.vert", "../shaders/planet.frag");
 
@@ -65,8 +72,14 @@ void init(void) {
     planet = LoadModelPlus("../assets/sphere.obj"); // Sphere
 
     // Important! The shader we upload to must be active!
-    glUseProgram(planetShader);
+
+    glUseProgram(pnoiseShader);
+    glUniformMatrix4fv(glGetUniformLocation(pnoiseShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+
+    glUseProgram(phongShader);
     glUniformMatrix4fv(glGetUniformLocation(phongShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+
+    glUseProgram(planetShader);
 
     printError("init arrays");
 }
@@ -85,7 +98,15 @@ void display(void) {
 
     a += 0.03;
 
+    //Varying time
+    t = glutGet(GLUT_ELAPSED_TIME);
+    t = sin(t);
+    //vec3 foo = {t, t, t};
+    //printVec3(foo);
+
     mat4 sunPos, planetPos, moonPos, planetRotPos, moonRotPos;
+
+    mat4 A, B, C, D, E;
     float xs = 0.0;
     float ys = 0.0;
     float zs = 0.0;
@@ -102,6 +123,10 @@ void display(void) {
     moonPos = Mult(planetPos, Mult(Ry(c), T(rm, 0, 0))); // Moon position
     planetRotPos = Mult(planetPos, Mult(Ry(b), S(0.3, 0.3, 0.3))); // Planet pos + rotation
     moonRotPos = Mult(moonPos, Mult(Ry(d), S(0.2, 0.2, 0.2))); // Moon pos + rotation
+
+    glUseProgram(pnoiseShader);
+    glUniform1f(glGetUniformLocation(pnoiseShader, "time"), sin(t));
+
 
     glUseProgram(phongShader);
     glUniformMatrix4fv(glGetUniformLocation(phongShader, "modelviewMatrix"), 1, GL_TRUE, sunPos.m);

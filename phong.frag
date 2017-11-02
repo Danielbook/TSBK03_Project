@@ -3,15 +3,24 @@
 // Simplified Phong: No materials, only one, hard coded light source
 // and no ambient
 
-out vec4 outColor;
+
 in vec3 exNormal; // Phong
 in vec3 exSurface; // Phong (specular)
+in float outPnoise;
+
+out vec4 outColor;
+out float pnoise;
 
 void main(void)
 {
 	const vec3 light = vec3(0.58, 0.58, 0.58); // Given in VIEW coordinates! You will usually give light in world coordinates.
 	float diffuse, specular, shade;
-	
+
+	//Pass Noise to next shader
+	pnoise = outPnoise;
+
+	//height*pnoise(freq*position+randVec, vec3(70.0));
+
 	// Diffuse
 	diffuse = dot(normalize(exNormal), light);
 	diffuse = max(0.0, diffuse); // No negative light

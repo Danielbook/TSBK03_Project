@@ -2,6 +2,7 @@
 in vec3 vNormal;
 in vec3 inPosition;
 in float noise;
+in vec3 pos;
 
 uniform float mountAmp;
 uniform vec3 surfaceColor;
@@ -20,6 +21,8 @@ void main() {
   float kd = 0.6;
   float ka = 0.4;
 
+  vec3 position = pos;
+
   float shoreLineTop = mountAmp/8.0+avgTemp-7.0;
 
   shoreLineTop = max(shoreLineTop, 3.0);
@@ -31,7 +34,7 @@ void main() {
   finalColor=mix(finalColor, snowColor, smoothstep(avgTemp, avgTemp+7.0, noise));
 
   // Low freq noise
-  finalColor=finalColor-0.04*pnoise(1.0*inPosition, vec3(10.0));
+  //finalColor=finalColor-0.04*pnoise(1.0*inPosition, vec3(10.0));
 
   vec3 ambient = ka * finalColor;
   vec3 diffuse = kd * finalColor * max(0.0, dot(vNormal, light));
