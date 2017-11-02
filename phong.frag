@@ -7,9 +7,11 @@
 in vec3 exNormal; // Phong
 in vec3 exSurface; // Phong (specular)
 in float outPnoise;
+in float outColorPnoise;
 
 out vec4 outColor;
 out float pnoise;
+out float colorPnoise;
 
 void main(void)
 {
@@ -18,6 +20,7 @@ void main(void)
 
 	//Pass Noise to next shader
 	pnoise = outPnoise;
+    colorPnoise = outColorPnoise;
 
 	//height*pnoise(freq*position+randVec, vec3(70.0));
 

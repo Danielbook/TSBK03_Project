@@ -179,11 +179,13 @@ float pnoise(vec3 P, vec3 rep)
 }
 
 
+in vec3 inPosition;
 
 uniform mat4 projectionMatrix;
 uniform float time;
 
 out float outPnoise;
+out float outColorPnoise;
 
 void main(void) {
 
@@ -191,5 +193,7 @@ void main(void) {
     vec3 rep = vec3(30.0);
 
     outPnoise = pnoise(P * time, rep);
+    outPnoise = 10.0*pnoise(15.0*inPosition+vec3(0.2, 0.34, 0.52), vec3(20.0));
+    outColorPnoise = pnoise(1.0*inPosition, vec3(10.0));
 	gl_Position = vec4(1.0); // This should include projection
 }

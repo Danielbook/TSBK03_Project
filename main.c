@@ -64,7 +64,7 @@ void init(void)
     projectionMatrix = frustum(-0.5, 0.5, -0.5, 0.5, 1.0, 300.0);
 
     // Load and compile shader
-    pnoiseShader = loadShaders("../classicnoise3D.vert","../classicnoise3D.frag");
+    pnoiseShader = loadShaders("../pnoiseShader.vert","../pnoiseShader.frag");
     phongShader = loadShaders("../phong.vert", "../phong.frag");
     planetShader = loadShaders("../shaders/planet.vert", "../shaders/planet.frag");
 
@@ -72,7 +72,6 @@ void init(void)
     planet = LoadModelPlus("../assets/sphere.obj"); // Sphere
 
     // Important! The shader we upload to must be active!
-
     glUseProgram(pnoiseShader);
     glUniformMatrix4fv(glGetUniformLocation(pnoiseShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
 
@@ -115,6 +114,19 @@ void display(void) {
     float d = a * 15;
     float rp = 2;
     float rm = 0.5;
+    /*
+        uniform float mountAmp;
+        uniform vec3 surfaceColor;
+        uniform vec3 lightPos;
+        uniform vec3 shoreColor;
+        uniform float avgTemp;
+*/
+    float mountAmp = 2.0;
+    float avgTemp = 7.0;
+    vec3 surfaceColor = {0.0, 0.4, 0.1};
+    vec3 lightPos = {255, 255, 255};
+    vec3 shoreColor = {0.95, 0.67, 0.26};
+
 
     // Calculate matrices in matrix sequences that impose the dependencies.
     mat4 CAM = lookAt(0, 4, 4, 0, 0, 0, 0, 1, 0);
@@ -125,6 +137,7 @@ void display(void) {
     moonRotPos = Mult(moonPos, Mult(Ry(d), S(0.2, 0.2, 0.2))); // Moon pos + rotation
 
     glUseProgram(pnoiseShader);
+    DrawModel(planet, phongShader, "inPosition", "inNormal", NULL);
     glUniform1f(glGetUniformLocation(pnoiseShader, "time"), sin(t));
 
 
@@ -133,6 +146,13 @@ void display(void) {
     DrawModel(planet, phongShader, "inPosition", "inNormal", NULL);
 
     glUseProgram(planetShader);
+
+    glUniform1f(glGetUniformLocation(planetShader, "mountAmp"), mountAmp);
+    glUniform1f(glGetUniformLocation(planetShader, "avgTemp"), avgTemp);
+    glUniform3f(glGetUniformLocation(planetShader, "surfaceColor"), surfaceColor.x, surfaceColor.y ,surfaceColor.z );
+    glUniform3f(glGetUniformLocation(planetShader, "lightPos"), lightPos.x, lightPos.y , lightPos.z );
+    glUniform3f(glGetUniformLocation(planetShader, "shoreColor"), shoreColor.x, shoreColor.y, shoreColor.z );
+
     glUniformMatrix4fv(glGetUniformLocation(planetShader, "modelviewMatrix"), 1, GL_TRUE, planetRotPos.m);
     DrawModel(planet, planetShader, "inPosition", "inNormal", NULL);
 

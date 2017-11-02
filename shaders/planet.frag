@@ -1,13 +1,14 @@
 #version 150
 in vec3 vNormal;
 in vec3 inPosition;
-in float noise;
 in vec3 pos;
+
+in float noise;
+in float colorNoise;
 
 uniform float mountAmp;
 uniform vec3 surfaceColor;
 uniform vec3 lightPos;
-uniform vec3 cameraPos;
 uniform vec3 shoreColor;
 uniform float avgTemp;
 
@@ -34,7 +35,7 @@ void main() {
   finalColor=mix(finalColor, snowColor, smoothstep(avgTemp, avgTemp+7.0, noise));
 
   // Low freq noise
-  //finalColor=finalColor-0.04*pnoise(1.0*inPosition, vec3(10.0));
+  finalColor=finalColor-0.04*colorNoise;
 
   vec3 ambient = ka * finalColor;
   vec3 diffuse = kd * finalColor * max(0.0, dot(vNormal, light));

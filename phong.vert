@@ -3,10 +3,12 @@
 in  vec3 inPosition;
 in  vec3 inNormal;
 in  float inPnoise;
+in  float inColorPnoise;
 
 out vec3 exNormal; // Phong
 out vec3 exSurface; // Phong (specular)
 out float outPnoise;
+out float outColorPnoise;
 
 uniform mat4 modelviewMatrix;
 uniform mat4 projectionMatrix;
@@ -19,6 +21,7 @@ void main(void)
 
     //Passing on noise
     outPnoise = inPnoise;
+    outColorPnoise = inColorPnoise;
 
 	gl_Position = projectionMatrix * modelviewMatrix * vec4(inPosition, 1.0); // This should include projection
 }
