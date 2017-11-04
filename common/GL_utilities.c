@@ -152,6 +152,11 @@ GLuint compileShaders(const char *vs, const char *fs, const char *gs, const char
 	return p;
 }
 
+GLuint loadShader(const char *fileName)
+{
+	return loadShadersGT(fileName, NULL, NULL, NULL, NULL);
+}
+
 GLuint loadShaders(const char *vertFileName, const char *fragFileName)
 {
 	return loadShadersGT(vertFileName, fragFileName, NULL, NULL, NULL);
@@ -177,8 +182,8 @@ GLuint loadShadersGT(const char *vertFileName, const char *fragFileName, const c
 	tes = readFile((char *)teFileName);
 	if (vs==NULL)
 		fprintf(stderr, "Failed to read %s from disk.\n", vertFileName);
-	if (fs==NULL)
-		fprintf(stderr, "Failed to read %s from disk.\n", fragFileName);
+//	if (fs==NULL)
+//		fprintf(stderr, "Failed to read %s from disk.\n", fragFileName);
 	if ((gs==NULL) && (geomFileName != NULL))
 		fprintf(stderr, "Failed to read %s from disk.\n", geomFileName);
 	if ((tcs==NULL) && (tcFileName != NULL))

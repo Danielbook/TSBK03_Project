@@ -1,11 +1,15 @@
+#version 150
+
 uniform float time;
 
-varying vec3 vNormal;
-varying vec3 pos;
-varying float noise;
+in vec3 vNormal;
+in vec3 pos;
+in float noise;
+in float colorNoise;
 
-uniform float mountAmp;
-uniform vec3 cameraPos;
+uniform float sunAmp;
+
+out vec4 outColor;
 
 void main() {
   vec3 fireColor = vec3(0.98, 0.75, 0.4);
@@ -13,17 +17,20 @@ void main() {
 
   float kd = 0.6;
   float ka = 0.4;
+  vNormal;
+  pos;
+  colorNoise;
 
   vec3 finalColor = mix(surfaceColor, fireColor, smoothstep(0.0, 100.0, noise));
 
   // Low freq noise
-  finalColor = finalColor-0.04*pnoise(0.05*pos, vec3(50.0));
+  finalColor = finalColor-0.04*noise;
 
   vec3 ambient = ka * finalColor;
   vec3 diffuse = kd * finalColor;
 
   finalColor = ambient+diffuse;
 
-  gl_FragColor = vec4(finalColor, 1.0);
+  outColor = vec4(finalColor, 1.0);
 }
 

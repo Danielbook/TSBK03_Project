@@ -14,7 +14,6 @@
 
 #include <OpenGL/gl3.h>
 #include "MicroGlut.h"
-#include "noise1234.h"
 //uses framework Cocoa
 #else
 #include <GL/gl.h>
@@ -28,14 +27,11 @@
 #include "LoadTGA.h"
 
 //constants
-const int initWidth = 512, initHeight = 512;
-
-// Model-to-world matrix
-// Modify this matrix.
-// See below for how it is applied to your model.
+const int initWidth = 1024, initHeight = 1024;
 
 // World-to-view matrix. Usually set by lookAt() or similar.
 mat4 viewMatrix;
+
 // Projection matrix, set by a call to perspective().
 mat4 projectionMatrix;
 
@@ -43,15 +39,11 @@ mat4 projectionMatrix;
 // * Model(s)
 Model *planet;
 // * Reference(s) to shader program(s)
-GLuint phongShader, planetShader, pnoiseShader;
+GLuint phongShader, planetShader, pnoiseShader, sunShader, noiseShader;
 // * Texture(s)
 GLuint texture;
 
-GLuint phongShader, pnoiseShader, testShader;
-// * Texture(s)
-GLuint texture;
-
-double t;
+GLfloat t;
 
 void init(void)
 {
@@ -64,21 +56,27 @@ void init(void)
     projectionMatrix = frustum(-0.5, 0.5, -0.5, 0.5, 1.0, 300.0);
 
     // Load and compile shader
-    pnoiseShader = loadShaders("../pnoiseShader.vert","../pnoiseShader.frag");
-    phongShader = loadShaders("../phong.vert", "../phong.frag");
+    noiseShader = loadShader("../shaders/noise/classicnoise3D.glsl");
+//    pnoiseShader = loadShaders("../pnoiseShader.vert","../pnoiseShader.frag");
+//    phongShader = loadShaders("../phong.vert", "../phong.frag");
     planetShader = loadShaders("../shaders/planet.vert", "../shaders/planet.frag");
+    sunShader = loadShaders("../shaders/sun.vert", "../shaders/sun.frag");
 
     // Upload geometry to the GPU:
     planet = LoadModelPlus("../assets/sphere.obj"); // Sphere
 
     // Important! The shader we upload to must be active!
-    glUseProgram(pnoiseShader);
-    glUniformMatrix4fv(glGetUniformLocation(pnoiseShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+//    glUseProgram(pnoiseShader);
+//    glUniformMatrix4fv(glGetUniformLocation(pnoiseShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
 
-    glUseProgram(phongShader);
-    glUniformMatrix4fv(glGetUniformLocation(phongShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+//    glUseProgram(phongShader);
+//    glUniformMatrix4fv(glGetUniformLocation(phongShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+
+    glUseProgram(sunShader);
+    glUniformMatrix4fv(glGetUniformLocation(sunShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
 
     glUseProgram(planetShader);
+    glUniformMatrix4fv(glGetUniformLocation(planetShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
 
     printError("init arrays");
 }
@@ -99,7 +97,7 @@ void display(void) {
 
     //Varying time
     t = glutGet(GLUT_ELAPSED_TIME);
-    t = sin(t);
+    t = (GLfloat) sin(t);
     //vec3 foo = {t, t, t};
     //printVec3(foo);
 
@@ -120,8 +118,9 @@ void display(void) {
         uniform vec3 lightPos;
         uniform vec3 shoreColor;
         uniform float avgTemp;
-*/
+    */
     float mountAmp = 2.0;
+    float sunAmp = 15.0;
     float avgTemp = 7.0;
     vec3 surfaceColor = {0.0, 0.4, 0.1};
     vec3 lightPos = {255, 255, 255};
@@ -129,24 +128,28 @@ void display(void) {
 
 
     // Calculate matrices in matrix sequences that impose the dependencies.
-    mat4 CAM = lookAt(0, 4, 4, 0, 0, 0, 0, 1, 0);
+    mat4 CAM = lookAt(0, 4, 4,
+                      0, 0, 0,
+                      0, 1, 0);
     sunPos = Mult(CAM, T(xs, ys, zs));
     planetPos = Mult(sunPos, Mult(Ry(a), T(rp, 0, 0))); // Planet position
     moonPos = Mult(planetPos, Mult(Ry(c), T(rm, 0, 0))); // Moon position
     planetRotPos = Mult(planetPos, Mult(Ry(b), S(0.3, 0.3, 0.3))); // Planet pos + rotation
     moonRotPos = Mult(moonPos, Mult(Ry(d), S(0.2, 0.2, 0.2))); // Moon pos + rotation
 
-    glUseProgram(pnoiseShader);
-    DrawModel(planet, phongShader, "inPosition", "inNormal", NULL);
-    glUniform1f(glGetUniformLocation(pnoiseShader, "time"), sin(t));
+    // NOISE
+//    glUseProgram(pnoiseShader);
+//    glUniform1f(glGetUniformLocation(pnoiseShader, "time"), t);
 
+    // SUN
+    glUseProgram(sunShader);
+    glUniform1f(glGetUniformLocation(sunShader, "sunAmp"), sunAmp);
 
-    glUseProgram(phongShader);
-    glUniformMatrix4fv(glGetUniformLocation(phongShader, "modelviewMatrix"), 1, GL_TRUE, sunPos.m);
-    DrawModel(planet, phongShader, "inPosition", "inNormal", NULL);
+    glUniformMatrix4fv(glGetUniformLocation(sunShader, "modelviewMatrix"), 1, GL_TRUE, sunPos.m);
+    DrawModel(planet, sunShader, "inPosition", "inNormal", NULL);
 
+    // PLANET
     glUseProgram(planetShader);
-
     glUniform1f(glGetUniformLocation(planetShader, "mountAmp"), mountAmp);
     glUniform1f(glGetUniformLocation(planetShader, "avgTemp"), avgTemp);
     glUniform3f(glGetUniformLocation(planetShader, "surfaceColor"), surfaceColor.x, surfaceColor.y ,surfaceColor.z );
