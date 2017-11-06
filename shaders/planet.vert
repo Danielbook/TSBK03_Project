@@ -117,7 +117,7 @@ float pnoise(vec3 P, vec3 rep)
 }
 
 void main() {
-	noise = pnoise(5.0*inPosition+vec3(0.2, 0.34, 0.52), vec3(150.0));
+	noise = 0.5*pnoise(50.0*inPosition+vec3(0.5, 0.34, 0.52), vec3(50.0));
 //	noise = pnoise;
 
 	// Apply elevation in normal

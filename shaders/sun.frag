@@ -1,11 +1,10 @@
-#version 150
+#version 410
 
 uniform float time;
 
 in vec3 vNormal;
 in vec3 pos;
 in float noise;
-in float colorNoise;
 
 uniform float sunAmp;
 
@@ -19,9 +18,8 @@ void main() {
   float ka = 0.4;
   vNormal;
   pos;
-  colorNoise;
 
-  vec3 finalColor = mix(surfaceColor, fireColor, smoothstep(0.0, 100.0, noise));
+  vec3 finalColor = mix(surfaceColor, fireColor, smoothstep(0.0, 0.07, noise));
 
   // Low freq noise
   finalColor = finalColor-0.04*noise;
