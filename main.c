@@ -33,9 +33,9 @@ GLuint planetShader, sunShader;
 // * Texture(s)
 GLuint texture;
 
-GLfloat t, a;
+GLfloat a;
 
-int frame = 0, time, timebase = 0;
+int frame = 0, time, timebase = 0, deltaTime = 0, startTime = 0;
 
 void init(void)
 {
@@ -75,22 +75,22 @@ void display(void)
 
     worldToView = lookAt(0, 0, 4, 0, 0, 0, 0, 1, 0);
 
-    a += 0.02;
+    a += 0.01;
 
     //Varying time
     frame++;
 
     time = glutGet(GLUT_ELAPSED_TIME);
-    t = glutGet(GLUT_ELAPSED_TIME);
 
+    deltaTime = time - startTime;
+    startTime = time;
+
+    // Print FPS
     if (time - timebase > 1000) {
         printf("FPS: %4.2f\n", frame * 1000.0 / (time - timebase));
         timebase = time;
         frame = 0;
-        printf("sin(time)=%f\n", sin(t));
     }
-    //vec3 foo = {t, t, t};
-    //printVec3(foo);
 
     mat4 sunPos, planetPos, moonPos, planetRotPos, moonRotPos;
 
@@ -131,7 +131,7 @@ void display(void)
     // SUN
     glUseProgram(sunShader);
     glUniform1f(glGetUniformLocation(sunShader, "sunAmp"), sunAmp);
-    glUniform1f(glGetUniformLocation(sunShader, "time"), t);
+    glUniform1f(glGetUniformLocation(sunShader, "time"), time);
     glUniformMatrix4fv(glGetUniformLocation(sunShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
     glUniformMatrix4fv(glGetUniformLocation(sunShader, "modelviewMatrix"), 1, GL_TRUE, sunPos.m);
 

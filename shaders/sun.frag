@@ -19,7 +19,7 @@ void main() {
   vNormal;
   pos;
 
-  vec3 finalColor = mix(surfaceColor, fireColor, smoothstep(0.0, 0.07, noise));
+  vec3 finalColor = mix(surfaceColor, fireColor, smoothstep(0.0, 0.04, noise));
 
   // Low freq noise
   finalColor = finalColor-0.04*noise;

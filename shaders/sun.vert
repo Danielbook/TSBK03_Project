@@ -122,11 +122,11 @@ float pnoise(vec3 P, vec3 rep)
 }
 
 void main() {
-    const float amplitude = 0.5;
-    const float frequency = 5;
-	noise = amplitude * pnoise(frequency * sin(time) * inPosition, vec3(20.0));
+    const float amplitude = 0.08;
+    const float frequency = 40;
+	noise = amplitude * pnoise((frequency + sin(0.0002*time)) * inPosition, vec3(20.0));
 
-	// Apply elevation in normal 
+	// Apply elevation in normal
     pos = inPosition + noise * inNormal;
 
     vNormal = inNormal;
