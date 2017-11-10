@@ -1,6 +1,7 @@
 #ifdef __APPLE__
 
 #include <OpenGL/gl3.h>
+#include <OpenGL/glu.h>
 #include "MicroGlut.h"
 //uses framework Cocoa
 #else
@@ -15,8 +16,8 @@
 #include "LoadTGA.h"
 
 // initial width and heights
-#define W 512
-#define H 512
+#define W 500
+#define H 500
 
 // World-to-view matrix. Usually set by lookAt() or similar.
 mat4 viewMatrix;
@@ -39,154 +40,173 @@ int frame = 0, time, timebase = 0, deltaTime = 0, startTime = 0;
 
 void init(void)
 {
-    dumpInfo();
+  dumpInfo();
 
-    // GL inits
-    glClearColor(0.0, 0.0, 0.0, 0);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
-    projectionMatrix = frustum(-0.5, 0.5, -0.5, 0.5, 1.0, 300.0);
-    printError("GL inits");
+  // GL inits
+  glClearColor(0.0, 0.0, 0.0, 0);
+  glEnable(GL_DEPTH_TEST);
+  glEnable(GL_CULL_FACE);
+  projectionMatrix = frustum(-0.5, 0.5, -0.5, 0.5, 1.0, 300.0);
+  printError("GL inits");
 
-    // Load and compile shaders
+  // Load and compile shaders
 //    noiseShader = loadShader("../shaders/noise/classicnoise3D.glsl");
-    planetShader = loadShaders("../shaders/planet.vert", "../shaders/planet.frag");
-    sunShader = loadShaders("../shaders/sun.vert", "../shaders/sun.frag");
+  planetShader = loadShaders("../shaders/planet.vert", "../shaders/planet.frag");
+  sunShader = loadShaders("../shaders/sun.vert", "../shaders/sun.frag");
 
-    printError("init shader");
+  printError("init shader");
 
-    // Upload geometry to the GPU:
-    sphere = LoadModelPlus("../assets/sphere2.obj"); // Sphere
+  // Upload geometry to the GPU:
+  sphere = LoadModelPlus("../assets/sphere64.obj"); // Sphere
 
-    printError("load models");
+  printError("load models");
 
-    cam = SetVector(3, 2, 3);
-    point = SetVector(0, 0, 0);
+  cam = SetVector(3, 2, 3);
+  point = SetVector(0, 0, 0);
 }
 
 void display(void)
 {
-    printError("pre display");
+  printError("pre display");
 
-    // clear the screen
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  // clear the screen
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    mat4 worldToView, m; // m1, m2, m, tr, scale;
+  a += 0.01;
 
-    worldToView = lookAt(0, 0, 4, 0, 0, 0, 0, 1, 0);
+  time = glutGet(GLUT_ELAPSED_TIME);
 
-    a += 0.01;
+  deltaTime = time - startTime;
+  startTime = time;
 
-    //Varying time
-    frame++;
+  //Varying time
+  frame++;
 
-    time = glutGet(GLUT_ELAPSED_TIME);
+//    // Print FPS
+//    if (time - timebase > 1000) {
+//        printf("FPS: %4.2f\n", frame * 1000.0 / (time - timebase));
+//        timebase = time;
+//        frame = 0;
+//    }
 
-    deltaTime = time - startTime;
-    startTime = time;
+  mat4 sunPos, planetPos, moonPos, planetRotPos, moonRotPos;
 
-    // Print FPS
-    if (time - timebase > 1000) {
-        printf("FPS: %4.2f\n", frame * 1000.0 / (time - timebase));
-        timebase = time;
-        frame = 0;
-    }
+  mat4 A, B, C, D, E;
+  float xs = 0.0;
+  float ys = 0.0;
+  float zs = 0.0;
+  float b = -a * 2;
+  float c = a * 5;
+  float d = a * 15;
+  float rp = 2;
+  float rm = 0.5;
 
-    mat4 sunPos, planetPos, moonPos, planetRotPos, moonRotPos;
+  // Calculate matrices in matrix sequences that impose the dependencies.
+  mat4 CAM = lookAt(0, 2, 4, 0, 0, 0, 0, 1, 0);
+  sunPos = Mult(CAM, T(xs, ys, zs));
+  planetPos = Mult(sunPos, Mult(Ry(0), T(rp, 0, 0))); // Planet position
+  planetRotPos = Mult(planetPos, Mult(Ry(c), S(0.4, 0.4, 0.4))); // Planet pos + rotation
 
-    mat4 A, B, C, D, E;
-    float xs = 0.0;
-    float ys = 0.0;
-    float zs = 0.0;
-    float b = -a * 2;
-    float c = a * 5;
-    float d = a * 15;
-    float rp = 2;
-    float rm = 0.5;
-
-    float mountAmp = 2.0;
-    float sunAmp = 15.0;
-    float avgTemp = 7.0;
-    vec3 surfaceColor = {0.0, 0.4, 0.1};
-    vec3 lightPos = {1.0, 0, 0.0};
-    vec3 shoreColor = {0.95, 0.67, 0.26};
+//  printMat4(sunPos);
+//  printf("|%f, ", sunPos.m[4]);
+//  printf("%f, ", sunPos.m[7]);
+//  printf("%f|\n", sunPos.m[11]);
+//  printf("%s\n","-------------------------------");
 
 
-    // Calculate matrices in matrix sequences that impose the dependencies.
-    mat4 CAM = lookAt(0, 4, 4,
-                      0, 0, 0,
-                      0, 1, 0);
-    sunPos = Mult(CAM, T(xs, ys, zs));
-    planetPos = Mult(sunPos, Mult(Ry(a), T(rp, 0, 0))); // Planet position
-    moonPos = Mult(planetPos, Mult(Ry(c), T(rm, 0, 0))); // Moon position
-    planetRotPos = Mult(planetPos, Mult(Ry(b), S(0.3, 0.3, 0.3))); // Planet pos + rotation
-    moonRotPos = Mult(moonPos, Mult(Ry(d), S(0.2, 0.2, 0.2))); // Moon pos + rotation
+  // Enable Z-buffering
+  glEnable(GL_DEPTH_TEST);
+  // Enable backface culling
+  glEnable(GL_CULL_FACE);
+  glCullFace(GL_BACK);
 
-    // Enable Z-buffering
-    glEnable(GL_DEPTH_TEST);
-    // Enable backface culling
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
+  // SUN
+  const float sunAmp = 0.1;
+  const float sunFreq = 80;
 
-    // SUN
-    glUseProgram(sunShader);
-    glUniform1f(glGetUniformLocation(sunShader, "sunAmp"), sunAmp);
-    glUniform1f(glGetUniformLocation(sunShader, "time"), time);
-    glUniformMatrix4fv(glGetUniformLocation(sunShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
-    glUniformMatrix4fv(glGetUniformLocation(sunShader, "modelviewMatrix"), 1, GL_TRUE, sunPos.m);
+  glUseProgram(sunShader);
+  glUniform1f(glGetUniformLocation(sunShader, "amplitude"), sunAmp);
+  glUniform1f(glGetUniformLocation(sunShader, "frequency"), sunFreq);
+  glUniform1f(glGetUniformLocation(sunShader, "time"), time);
+  glUniformMatrix4fv(glGetUniformLocation(sunShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+  glUniformMatrix4fv(glGetUniformLocation(sunShader, "modelviewMatrix"), 1, GL_TRUE, sunPos.m);
 
-    DrawModel(sphere, sunShader, "inPosition", "inNormal", NULL);
+  DrawModel(sphere, sunShader, "inPosition", "inNormal", NULL);
 
-    // PLANET
-    glUseProgram(planetShader);
-    glUniform1f(glGetUniformLocation(planetShader, "mountAmp"), mountAmp);
-    glUniform1f(glGetUniformLocation(planetShader, "avgTemp"), avgTemp);
-    glUniform3f(glGetUniformLocation(planetShader, "surfaceColor"), surfaceColor.x, surfaceColor.y, surfaceColor.z);
-    glUniform3f(glGetUniformLocation(planetShader, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
-    glUniform3f(glGetUniformLocation(planetShader, "shoreColor"), shoreColor.x, shoreColor.y, shoreColor.z);
-    glUniformMatrix4fv(glGetUniformLocation(planetShader, "modelviewMatrix"), 1, GL_TRUE, planetRotPos.m);
-    glUniformMatrix4fv(glGetUniformLocation(planetShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+//  GLfloat mat_specular[] = { 1.0, 1.0, 1.0, 1.0 };
+//  GLfloat mat_shininess[] = { 50.0 };
+//  GLfloat light_position[] = { 1.0, 0.0, 0.0, 0.0 };
+//  glClearColor (0.0, 0.0, 0.0, 0.0);
+//  glShadeModel (GL_SMOOTH);
+//
+//  glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+//  glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
+//  glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+//
+//  glEnable(GL_LIGHTING);
+//  glEnable(GL_LIGHT0);
 
-    DrawModel(sphere, planetShader, "inPosition", "inNormal", NULL);
+  // PLANET
+  const float mountAmp = 0.5;
+  const float mountFreq = 5;
+  const float avgTemp = 7.0;
+  vec3 surfaceColor = {0.0, 0.4, 0.1};
+  vec3 snowColor = {0.8, 0.9, 1.0};
+  vec3 sandColor = {0.95, 0.67, 0.26};
+  vec3 lightPos = {0.0, 0.0, 0};
 
-    printError("display");
+  glUseProgram(planetShader);
+  glUniform1f(glGetUniformLocation(planetShader, "amplitude"), mountAmp);
+  glUniform1f(glGetUniformLocation(planetShader, "frequency"), mountFreq);
+  glUniform1f(glGetUniformLocation(planetShader, "avgTemp"), avgTemp);
+  glUniformMatrix4fv(glGetUniformLocation(planetShader, "sunPos"), 1, GL_TRUE, sunPos.m);
+  glUniform3f(glGetUniformLocation(planetShader, "surfaceColor"), surfaceColor.x, surfaceColor.y, surfaceColor.z);
+  glUniform3f(glGetUniformLocation(planetShader, "snowColor"), snowColor.x, snowColor.y, snowColor.z);
+  glUniform3f(glGetUniformLocation(planetShader, "sandColor"), sandColor.x, sandColor.y, sandColor.z);
+  glUniformMatrix4fv(glGetUniformLocation(planetShader, "viewMatrix"), 1, GL_TRUE, CAM.m);
+  glUniformMatrix4fv(glGetUniformLocation(planetShader, "modelviewMatrix"), 1, GL_TRUE, planetRotPos.m);
+  glUniformMatrix4fv(glGetUniformLocation(planetShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
 
-    glutSwapBuffers();
+  DrawModel(sphere, planetShader, "inPosition", "inNormal", NULL);
+
+  printError("display");
+
+  glutSwapBuffers();
 }
 
 void reshape(GLsizei w, GLsizei h)
 {
-    glViewport(0, 0, w, h);
-    GLfloat ratio = (GLfloat) w / (GLfloat) h;
-    projectionMatrix = perspective(70, ratio, 0.2, 1000.0);
-    glUniformMatrix4fv(glGetUniformLocation(sunShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+  glViewport(0, 0, w, h);
+  GLfloat ratio = (GLfloat) w / (GLfloat) h;
+  projectionMatrix = perspective(70, ratio, 0.2, 1000.0);
+  glUniformMatrix4fv(glGetUniformLocation(sunShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
 }
 
 // This function is called whenever the computer is idle
 // As soon as the machine is idle, ask GLUT to trigger rendering of a new frame
 void onTimer(int value)
 {
-    glutPostRedisplay();
-    glutTimerFunc(5, &onTimer, value);
+  glutPostRedisplay();
+  glutTimerFunc(5, &onTimer, value);
 }
 
 int main(int argc, char *argv[])
 {
-    glutInit(&argc, argv);
+  glutInit(&argc, argv);
 
-    glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE);
-    glutInitWindowSize(W, H);
+  glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE);
+  glutInitWindowSize(W, H);
 
-    glutInitContextVersion(3, 2);
-    glutCreateWindow("TSBK03 Project");
-    glutDisplayFunc(display);
+  glutInitContextVersion(3, 2);
+  glutCreateWindow("TSBK03 Project");
+  glutDisplayFunc(display);
 
-    glutTimerFunc(5, &onTimer, 0);
-    glutReshapeFunc(reshape);
+  glutTimerFunc(5, &onTimer, 0);
+  glutReshapeFunc(reshape);
 
-    init();
-    zprInit(&viewMatrix, cam, point);
-    glutMainLoop();
-    exit(0);
+  init();
+  zprInit(&viewMatrix, cam, point);
+  glutMainLoop();
+  exit(0);
 }
 

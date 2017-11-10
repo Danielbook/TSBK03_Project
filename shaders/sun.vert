@@ -2,10 +2,10 @@
 
 in vec3 inPosition;
 in vec3 inNormal;
-uniform float time;
-//in float inPnoise; //pnoise in is a float, cant be used as a function below
-//in float inColorPnoise;
 
+uniform float time;
+uniform float amplitude;
+uniform float frequency;
 uniform mat4 modelviewMatrix;
 uniform mat4 projectionMatrix;
 
@@ -122,9 +122,7 @@ float pnoise(vec3 P, vec3 rep)
 }
 
 void main() {
-    const float amplitude = 0.08;
-    const float frequency = 40;
-	noise = amplitude * pnoise((frequency + sin(0.0002*time)) * inPosition, vec3(20.0));
+	noise = amplitude * pnoise((frequency + sin(0.0002*time)) * vec3(0.9, 0.26, 0.56) * inPosition, vec3(20.0));
 
 	// Apply elevation in normal
     pos = inPosition + noise * inNormal;

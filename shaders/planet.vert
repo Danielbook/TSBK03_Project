@@ -2,8 +2,11 @@
 in vec3 inPosition;
 in vec3 inNormal;
 
+uniform float amplitude;
+uniform float frequency;
 uniform mat4 modelviewMatrix;
 uniform mat4 projectionMatrix;
+
 
 out vec3 vNormal;
 out vec3 pos;
@@ -117,15 +120,12 @@ float pnoise(vec3 P, vec3 rep)
 }
 
 void main() {
-    const float amplitude = 0.5;
-    const float frequency = 5;
-
 	noise = amplitude*pnoise(frequency*inPosition, vec3(20.0));
 
 	// Apply elevation in normal
-    pos = inPosition + noise * inNormal;
+  pos = inPosition + noise * inNormal;
 
-    vNormal = inNormal;
+  vNormal = inNormal;
 
-    gl_Position = projectionMatrix * modelviewMatrix * vec4( pos, 1.0 );
+  gl_Position = projectionMatrix * modelviewMatrix * vec4( pos, 1.0 );
 }
