@@ -1,16 +1,17 @@
 #version 410
 in vec3 inPosition;
 in vec3 inNormal;
+in vec2 inTexCoord;
 
 uniform float amplitude;
 uniform float frequency;
 uniform mat4 modelviewMatrix;
 uniform mat4 projectionMatrix;
 
-
 out vec3 vNormal;
 out vec3 pos;
 out float noise;
+out vec2 texCoord;
 
 // GLSL textureless classic 3D noise "cnoise",
 // with an RSL-style periodic variant "pnoise".
@@ -121,6 +122,8 @@ float pnoise(vec3 P, vec3 rep)
 
 void main() {
 	noise = amplitude*pnoise(frequency*inPosition, vec3(20.0));
+
+  texCoord = inTexCoord;
 
 	// Apply elevation in normal
   pos = inPosition + noise * inNormal;

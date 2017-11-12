@@ -1,10 +1,10 @@
 #version 410
 
-in vec3 vNormal;
+in vec3 vNormalG;
 in vec3 inPosition;
-in vec3 pos;
-
-in float noise;
+in vec3 posG;
+in float noiseG;
+in vec2 texCoordG;
 
 uniform float mountAmp;
 uniform mat4 sunPos;
@@ -116,25 +116,25 @@ void main() {
   // Translate back to sun origin in some way???
   vec4 _lightDirUniform = inverse(modelViewMatrix) * inverse(sunPos) * light;
 
-  vec4 Normal = vec4(vNormal, 1.0);
+  vec4 Normal = vec4(vNormalG, 1.0);
 
   float kd = 0.8;
   float ka = 0.2;
 
-  vec3 position = pos;
+  vec3 position = posG;
 
   float shoreLineTop = mountAmp/8.0+avgTemp-7.0;
 
   shoreLineTop = max(-10, 0.01);
 
   // Sandy shores
-  vec3 finalColor=mix(sandColor, surfaceColor, smoothstep(0.0, shoreLineTop, noise));
+  vec3 finalColor=mix(sandColor, surfaceColor, smoothstep(0.0, shoreLineTop, noiseG));
 
   // Snow on peaks
-  finalColor=mix(finalColor, snowColor, smoothstep(avgTemp, avgTemp+7.0, noise));
+  finalColor=mix(finalColor, snowColor, smoothstep(avgTemp, avgTemp+7.0, noiseG));
 
   // Low freq noise
-  finalColor=finalColor-0.04*pnoise(1.0*pos, vec3(10.0));
+  finalColor=finalColor-0.04*pnoise(1.0*posG, vec3(10.0));
 
   vec3 ambient = ka * finalColor;
   vec3 diffuse = kd * finalColor * max(0.0, dot(Normal, light));

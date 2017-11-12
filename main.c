@@ -51,7 +51,7 @@ void init(void)
 
   // Load and compile shaders
 //    noiseShader = loadShader("../shaders/noise/classicnoise3D.glsl");
-  planetShader = loadShaders("../shaders/planet.vert", "../shaders/planet.frag");
+  planetShader = loadShadersG("../shaders/planet.vert", "../shaders/planet.frag", "../shaders/planet.geom");
   sunShader = loadShaders("../shaders/sun.vert", "../shaders/sun.frag");
 
   printError("init shader");
@@ -167,7 +167,7 @@ void display(void)
   glUniformMatrix4fv(glGetUniformLocation(planetShader, "modelviewMatrix"), 1, GL_TRUE, planetRotPos.m);
   glUniformMatrix4fv(glGetUniformLocation(planetShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
 
-  DrawModel(sphere, planetShader, "inPosition", "inNormal", NULL);
+  DrawModel(sphere, planetShader, "inPosition", "inNormal", "inTexCoord");
 
   printError("display");
 
