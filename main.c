@@ -167,7 +167,7 @@ void display(void)
   glUniformMatrix4fv(glGetUniformLocation(planetShader, "modelviewMatrix"), 1, GL_TRUE, planetRotPos.m);
   glUniformMatrix4fv(glGetUniformLocation(planetShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
 
-  DrawModel(sphere, planetShader, "inPosition", "inNormal", "inTexCoord");
+  DrawModel(sphere, planetShader, "inPosition", "inNormal", NULL);
 
   printError("display");
 

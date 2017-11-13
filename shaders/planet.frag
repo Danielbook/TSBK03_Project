@@ -4,7 +4,6 @@ in vec3 vNormalG;
 in vec3 inPosition;
 in vec3 posG;
 in float noiseG;
-in vec2 texCoordG;
 
 uniform float mountAmp;
 uniform mat4 sunPos;
