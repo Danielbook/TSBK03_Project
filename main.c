@@ -16,8 +16,8 @@
 #include "LoadTGA.h"
 
 // initial width and heights
-#define W 500
-#define H 500
+#define W 720
+#define H 720
 
 // World-to-view matrix. Usually set by lookAt() or similar.
 mat4 viewMatrix;
@@ -162,12 +162,37 @@ void display(void)
   glUniformMatrix4fv(glGetUniformLocation(planetShader, "sunPos"), 1, GL_TRUE, sunPos.m);
   glUniform3f(glGetUniformLocation(planetShader, "surfaceColor"), surfaceColor.x, surfaceColor.y, surfaceColor.z);
   glUniform3f(glGetUniformLocation(planetShader, "snowColor"), snowColor.x, snowColor.y, snowColor.z);
+  glUniform3f(glGetUniformLocation(planetShader, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
   glUniform3f(glGetUniformLocation(planetShader, "sandColor"), sandColor.x, sandColor.y, sandColor.z);
   glUniformMatrix4fv(glGetUniformLocation(planetShader, "viewMatrix"), 1, GL_TRUE, CAM.m);
   glUniformMatrix4fv(glGetUniformLocation(planetShader, "modelviewMatrix"), 1, GL_TRUE, planetRotPos.m);
   glUniformMatrix4fv(glGetUniformLocation(planetShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
 
-  DrawModel(sphere, planetShader, "inPosition", "inNormal", NULL);
+  //DrawModel(sphere, planetShader, "inPosition", "inNormal", NULL);
+
+  /*
+  * Stencil testing
+  */
+
+  // Clear the screen to white
+  //glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+
+  glEnable(GL_DEPTH_TEST);
+  glEnable(GL_STENCIL_TEST);
+
+    glStencilFunc(GL_ALWAYS, 0, 0xFF); // init to 0, camera is not in shadowed area
+
+    //Increment stencil when entering object
+    glCullFace(GL_FRONT);
+    glStencilOp(GL_KEEP, GL_INCR, GL_KEEP);
+
+    //Decrement stencil when exiting object
+    glCullFace(GL_BACK);
+    glStencilOp(GL_KEEP, GL_DECR, GL_KEEP);
+
+    DrawModel(sphere, planetShader, "inPosition", "inNormal", NULL);
+
+  glDisable(GL_STENCIL_TEST);
 
   printError("display");
 
