@@ -124,7 +124,7 @@ void main() {
   finalColor=mix(sandColor, surfaceColor, smoothstep(0.0, shoreLineTop, noise));
 
   // Snow on peaks
-  finalColor=mix(finalColor, snowColor, smoothstep(avgTemp, avgTemp+7.0, noiseG));
+  finalColor=mix(finalColor, snowColor, smoothstep(avgTemp, avgTemp+7.0, noise));
 
   // Low freq noise
   finalColor=finalColor-0.04*pnoise(1.0*vPosition, vec3(10.0));

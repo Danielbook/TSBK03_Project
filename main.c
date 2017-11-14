@@ -46,7 +46,7 @@ void init(void)
 
   // Load and compile shaders
 //    noiseShader = loadShader("../shaders/noise/classicnoise3D.glsl");
-  planetShader = loadShadersG("../shaders/planet.vert", "../shaders/planet.frag", "../shaders/planet.geom");
+  planetShader = loadShaders("../shaders/planet.vert", "../shaders/planet.frag");
   sunShader = loadShaders("../shaders/sun.vert", "../shaders/sun.frag");
 
   printError("init shader");
@@ -138,7 +138,6 @@ void display(void)
   glUniform4f(glGetUniformLocation(planetShader, "lightPosition"), lightPosition.x, lightPosition.y, lightPosition.z, lightPosition.w);
   glUniform3f(glGetUniformLocation(planetShader, "surfaceColor"), surfaceColor.x, surfaceColor.y, surfaceColor.z);
   glUniform3f(glGetUniformLocation(planetShader, "snowColor"), snowColor.x, snowColor.y, snowColor.z);
-  glUniform3f(glGetUniformLocation(planetShader, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
   glUniform3f(glGetUniformLocation(planetShader, "sandColor"), sandColor.x, sandColor.y, sandColor.z);
   glUniformMatrix4fv(glGetUniformLocation(planetShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
   glUniformMatrix4fv(glGetUniformLocation(planetShader, "viewMatrix"), 1, GL_TRUE, viewMatrix.m);
