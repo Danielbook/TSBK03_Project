@@ -46,7 +46,7 @@ void init(void)
 
   // Load and compile shaders
 //    noiseShader = loadShader("../shaders/noise/classicnoise3D.glsl");
-  planetShader = loadShaders("../shaders/planet.vert", "../shaders/planet.frag");
+  planetShader = loadShadersG("../shaders/planet.vert", "../shaders/planet.frag", "../shaders/planet.geom");
   sunShader = loadShaders("../shaders/sun.vert", "../shaders/sun.frag");
 
   printError("init shader");

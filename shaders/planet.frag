@@ -1,8 +1,8 @@
 #version 410
 
-in vec3 vNormal;
-in vec3 vPosition;
-in float noise;
+in vec3 vNormalG;
+in vec3 vPositionG;
+in float noiseG;
 
 uniform float mountAmp;
 uniform vec3 surfaceColor;
@@ -114,23 +114,23 @@ void main() {
   float kd = 2.0, ka = 0.2;
 
   vec4 lightPosition = viewMatrix * lightPosition;
-  vec3 lightVector = lightPosition.xyz - vPosition;
+  vec3 lightVector = lightPosition.xyz - vPositionG;
 
   float shoreLineTop = mountAmp/8.0+avgTemp-7.0;
 
   shoreLineTop = max(-10, 0.01);
 
   // Sandy shores
-  finalColor=mix(sandColor, surfaceColor, smoothstep(0.0, shoreLineTop, noise));
+  finalColor=mix(sandColor, surfaceColor, smoothstep(0.0, shoreLineTop, noiseG));
 
   // Snow on peaks
-  finalColor=mix(finalColor, snowColor, smoothstep(avgTemp, avgTemp+7.0, noise));
+  finalColor=mix(finalColor, snowColor, smoothstep(avgTemp, avgTemp+7.0, noiseG));
 
   // Low freq noise
-  finalColor=finalColor-0.04*pnoise(1.0*vPosition, vec3(10.0));
+  finalColor=finalColor-0.04*pnoise(1.0*vPositionG, vec3(10.0));
 
   ambient = ka * finalColor;
-  diffuse = kd * finalColor * max(0.0, dot(normalize(vNormal), lightVector));
+  diffuse = kd * finalColor * max(0.0, dot(normalize(vNormalG), lightVector));
 
   finalColor = diffuse+ambient;
 

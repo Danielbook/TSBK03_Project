@@ -14,13 +14,13 @@ uniform vec3 lightPos;
 //out vec2 texCoordG;
 out vec3 vNormalG;
 out float noiseG;
-out vec3 posG;
+out vec3 vPositionG;
 
 void main() {
   vec4 middleOfTriangle = vec4(0.0);
 
   noiseG = noise[1];
-  posG = vPosition[1];
+  vPositionG = vPosition[1];
 
   for(int i = 0; i < gl_in.length(); i++)
   {
