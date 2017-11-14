@@ -107,6 +107,7 @@ void display(void)
   // SUN
   const float sunAmp = 0.1;
   const float sunFreq = 80;
+//  mat3 sunNormalMatrix = InverseTranspose(sunPos);
 
   glUseProgram(sunShader);
   glUniform1f(glGetUniformLocation(sunShader, "amplitude"), sunAmp);
@@ -114,6 +115,7 @@ void display(void)
   glUniform1f(glGetUniformLocation(sunShader, "time"), time);
   glUniformMatrix4fv(glGetUniformLocation(sunShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
   glUniformMatrix4fv(glGetUniformLocation(sunShader, "modelViewMatrix"), 1, GL_TRUE, sunPos.m);
+//  glUniformMatrix4fv(glGetUniformLocation(sunShader, "normalMatrix"), 1, GL_TRUE, sunNormalMatrix.m);
 
   DrawModel(sphere, sunShader, "inPosition", "inNormal", NULL);
 

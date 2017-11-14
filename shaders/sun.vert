@@ -7,6 +7,7 @@ uniform float time;
 uniform float amplitude;
 uniform float frequency;
 uniform mat4 modelviewMatrix;
+//uniform mat3 normalMatrix;
 uniform mat4 projectionMatrix;
 
 out vec3 vNormal;
@@ -112,9 +113,10 @@ void main() {
 	noise = amplitude * pnoise((frequency + sin(0.0002*time)) * vec3(0.9, 0.26, 0.56) * inPosition, vec3(20.0));
 
 	// Apply elevation in normal
-    pos = inPosition + noise * inNormal;
+  pos = inPosition + noise * inNormal;
 
-    vNormal = inNormal;
+//  vNormal = normalize(normalMatrix * inNormal);
+  vNormal = inNormal;
 
-    gl_Position = projectionMatrix * modelviewMatrix * vec4( pos, 1.0 );
+  gl_Position = projectionMatrix * modelviewMatrix * vec4( pos, 1.0 );
 }
