@@ -4,26 +4,13 @@ in vec3 inNormal;
 
 uniform float amplitude;
 uniform float frequency;
-uniform mat4 modelviewMatrix;
+uniform mat4 modelViewMatrix;
+uniform mat3 normalMatrix;
 uniform mat4 projectionMatrix;
 
-
 out vec3 vNormal;
-out vec3 pos;
+out vec3 vPosition;
 out float noise;
-
-// GLSL textureless classic 3D noise "cnoise",
-// with an RSL-style periodic variant "pnoise".
-// Author:  Stefan Gustavson (stefan.gustavson@liu.se)
-// Version: 2011-10-11
-//
-// Many thanks to Ian McEwan of Ashima Arts for the
-// ideas for permutation and gradient selection.
-//
-// Copyright (c) 2011 Stefan Gustavson. All rights reserved.
-// Distributed under the MIT license. See LICENSE file.
-// https://github.com/stegu/webgl-noise
-//
 
 vec3 mod289(vec3 x)
 {
@@ -122,10 +109,13 @@ float pnoise(vec3 P, vec3 rep)
 void main() {
 	noise = amplitude*pnoise(frequency*inPosition, vec3(20.0));
 
-	// Apply elevation in normal
-  pos = inPosition + noise * inNormal;
+  vec3 pos = inPosition + noise * inNormal;
 
-  vNormal = inNormal;
+  vec4 viewModelPosition = modelViewMatrix * vec4(pos, 1.0);
 
-  gl_Position = projectionMatrix * modelviewMatrix * vec4( pos, 1.0 );
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+
+  vPosition = viewModelPosition.xyz;
+
+  vNormal = normalize(normalMatrix * inNormal);
 }

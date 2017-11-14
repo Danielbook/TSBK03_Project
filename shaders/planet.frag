@@ -1,18 +1,17 @@
 #version 410
 
 in vec3 vNormal;
-in vec3 inPosition;
-in vec3 pos;
-
+in vec3 vPosition;
 in float noise;
 
 uniform float mountAmp;
-uniform mat4 sunPos;
 uniform vec3 surfaceColor;
 uniform vec3 snowColor;
 uniform vec3 sandColor;
 uniform float avgTemp;
+uniform vec4 lightPosition;
 uniform mat4 modelViewMatrix;
+uniform mat4 viewMatrix;
 
 out vec4 outColor;
 
@@ -111,33 +110,27 @@ float pnoise(vec3 P, vec3 rep)
 }
 
 void main() {
-  vec4 light = vec4(0.0, 0.0, 0.0, 1.0);
+  vec3 ambient, diffuse, finalColor;
+  float kd = 2.0, ka = 0.2;
 
-  // Translate back to sun origin in some way???
-  vec4 _lightDirUniform = inverse(modelViewMatrix) * inverse(sunPos) * light;
-
-  vec4 Normal = vec4(vNormal, 1.0);
-
-  float kd = 0.8;
-  float ka = 0.2;
-
-  vec3 position = pos;
+  vec4 lightPosition = viewMatrix * lightPosition;
+  vec3 lightVector = lightPosition.xyz - vPosition;
 
   float shoreLineTop = mountAmp/8.0+avgTemp-7.0;
 
   shoreLineTop = max(-10, 0.01);
 
   // Sandy shores
-  vec3 finalColor=mix(sandColor, surfaceColor, smoothstep(0.0, shoreLineTop, noise));
+  finalColor=mix(sandColor, surfaceColor, smoothstep(0.0, shoreLineTop, noise));
 
   // Snow on peaks
   finalColor=mix(finalColor, snowColor, smoothstep(avgTemp, avgTemp+7.0, noise));
 
   // Low freq noise
-  finalColor=finalColor-0.04*pnoise(1.0*pos, vec3(10.0));
+  finalColor=finalColor-0.04*pnoise(1.0*vPosition, vec3(10.0));
 
-  vec3 ambient = ka * finalColor;
-  vec3 diffuse = kd * finalColor * max(0.0, dot(Normal, light));
+  ambient = ka * finalColor;
+  diffuse = kd * finalColor * max(0.0, dot(normalize(vNormal), lightVector));
 
   finalColor = diffuse+ambient;
 
