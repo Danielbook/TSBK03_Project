@@ -114,7 +114,7 @@ void display(void)
   glUniform1f(glGetUniformLocation(sunShader, "frequency"), sunFreq);
   glUniform1f(glGetUniformLocation(sunShader, "time"), time);
   glUniformMatrix4fv(glGetUniformLocation(sunShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
-  glUniformMatrix4fv(glGetUniformLocation(sunShader, "modelViewMatrix"), 1, GL_TRUE, sunPos.m);
+  glUniformMatrix4fv(glGetUniformLocation(sunShader, "modelviewMatrix"), 1, GL_TRUE, sunPos.m);
 //  glUniformMatrix4fv(glGetUniformLocation(sunShader, "normalMatrix"), 1, GL_TRUE, sunNormalMatrix.m);
 
   DrawModel(sphere, sunShader, "inPosition", "inNormal", NULL);
