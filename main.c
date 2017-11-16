@@ -21,6 +21,9 @@
 
 // Projection matrix, set by a call to perspective().
 mat4 projectionMatrix;
+mat4 viewMatrix;
+
+Point3D cam, point;
 
 // * Model(s)
 Model *sphere;
@@ -32,6 +35,14 @@ GLuint texture;
 GLfloat a;
 
 int frame = 0, time, timebase = 0, deltaTime = 0, startTime = 0;
+
+// This function is called whenever the computer is idle
+// As soon as the machine is idle, ask GLUT to trigger rendering of a new frame
+void onTimer(int value)
+{
+  glutPostRedisplay();
+  glutTimerFunc(5, &onTimer, value);
+}
 
 void init(void)
 {
@@ -54,6 +65,13 @@ void init(void)
   sphere = LoadModelPlus("../assets/sphere64.obj"); // Sphere
 
   printError("load models");
+
+  glutTimerFunc(5, &onTimer, 0);
+
+  cam = SetVector(0, 2, 4);
+  point = SetVector(0, 1, 0);
+
+  zprInit(&viewMatrix, cam, point);
 }
 
 void display(void)
@@ -79,7 +97,7 @@ void display(void)
 //        frame = 0;
 //    }
 
-  mat4 viewMatrix, sunPos, planetPos, planetRotPos;
+  mat4 sunPos, planetPos, planetRotPos;
 
   float b = -a * 2;
   float c = a * 5;
@@ -87,9 +105,9 @@ void display(void)
   float rm = 0.5;
 
   // Calculate matrices in matrix sequences that impose the dependencies.
-  viewMatrix = lookAt(0, 4, 4,  // Camera is set in in World Space
-                      0, 0, 0,  // and looks at the origin
-                      0, 1, 0); // Head is up
+//  viewMatrix = lookAt(0, 2, 4,  // Camera is set in in World Space
+//                      0, 0, 0,  // and looks at the origin
+//                      0, 1, 0); // Head is up
   sunPos = Mult(viewMatrix, T(0, 0, 0));
   planetPos = Mult(sunPos, Mult(Ry(0), T(3, 0, 0))); // Planet position
   planetRotPos = Mult(planetPos, Mult(Ry(0), S(0.4, 0.4, 0.4))); // Planet pos + rotation
@@ -176,12 +194,10 @@ void display(void)
   glutSwapBuffers();
 }
 
-// This function is called whenever the computer is idle
-// As soon as the machine is idle, ask GLUT to trigger rendering of a new frame
-void onTimer(int value)
-{
-  glutPostRedisplay();
-  glutTimerFunc(5, &onTimer, value);
+void reshape(GLsizei w, GLsizei h) {
+  glViewport(0, 0, w, h);
+  GLfloat ratio = (GLfloat) w / (GLfloat) h;
+  projectionMatrix = perspective(90, ratio, 1.0, 1000);
 }
 
 int main(int argc, char *argv[])
@@ -194,8 +210,7 @@ int main(int argc, char *argv[])
   glutInitContextVersion(3, 2);
   glutCreateWindow("TSBK03 Project");
   glutDisplayFunc(display);
-
-  glutTimerFunc(5, &onTimer, 0);
+  glutReshapeFunc(reshape);
 
   init();
   glutMainLoop();
