@@ -1,15 +1,19 @@
-varying vec3 vNormal;
-varying vec3 pos;
+#version 410
+in vec3 inPosition;
+in vec3 inNormal;
 
 uniform float time;
 uniform float avgTemp;
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+
+out vec3 vNormal;
+out vec3 vPosition;
 
 void main() {
-	vNormal = normal;
+	vNormal = inNormal;
 
-	float oceanDisplacement = avgTemp-7.0;
-	oceanDisplacement = max(0.0, oceanDisplacement);
+	vPosition = inPosition;
 
-	pos = position-normal*0.4*oceanDisplacement;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4( pos, 1.0 );
+  gl_Position = projectionMatrix * modelViewMatrix * vec4( vPosition, 1.0 );
 }

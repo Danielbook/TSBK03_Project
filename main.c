@@ -28,7 +28,7 @@ Point3D cam, point;
 // * Model(s)
 Model *sphere;
 // * Reference(s) to shader program(s)
-GLuint planetShader, sunShader;
+GLuint planetShader, sunShader, oceanShader;
 // * Texture(s)
 GLuint texture;
 
@@ -52,23 +52,24 @@ void init(void)
   glClearColor(0.0, 0.0, 0.0, 0);
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_CULL_FACE);
-  projectionMatrix = frustum(-1, 1, -1, 1, 1.0, 300.0);
+  projectionMatrix = frustum(-1, 1, -1, 1, 0.5, 100.0);
   printError("GL inits");
 
   // Load and compile shaders
   planetShader = loadShadersG("../shaders/planet.vert", "../shaders/planet.frag", "../shaders/planet.geom");
   sunShader = loadShaders("../shaders/sun.vert", "../shaders/sun.frag");
+  oceanShader = loadShaders("../shaders/ocean.vert", "../shaders/ocean.frag");
 
   printError("init shader");
 
   // Upload geometry to the GPU:
-  sphere = LoadModelPlus("../assets/sphere64.obj"); // Sphere
+  sphere = LoadModelPlus("../assets/spherelarge128.obj"); // Sphere
 
   printError("load models");
 
   glutTimerFunc(5, &onTimer, 0);
 
-  cam = SetVector(0, 2, 4);
+  cam = SetVector(0, 300, 100);
   point = SetVector(0, 1, 0);
 
   zprInit(&viewMatrix, cam, point);
@@ -97,7 +98,7 @@ void display(void)
 //        frame = 0;
 //    }
 
-  mat4 sunPos, planetPos, planetRotPos;
+  mat4 sunPos, planetPos, planetRotPos, planetOcean;
 
   float b = -a * 2;
   float c = a * 5;
@@ -109,8 +110,9 @@ void display(void)
 //                      0, 0, 0,  // and looks at the origin
 //                      0, 1, 0); // Head is up
   sunPos = Mult(viewMatrix, T(0, 0, 0));
-  planetPos = Mult(sunPos, Mult(Ry(0), T(3, 0, 0))); // Planet position
+  planetPos = Mult(sunPos, Mult(Ry(0), T(200, 0, 0))); // Planet position
   planetRotPos = Mult(planetPos, Mult(Ry(0), S(0.4, 0.4, 0.4))); // Planet pos + rotation
+  planetOcean = Mult(planetRotPos, S(0.97, 0.97, 0.97)); // Planet pos + rotation
 
 //  printMat4(planetRotPos);
 
@@ -136,11 +138,11 @@ void display(void)
   DrawModel(sphere, sunShader, "inPosition", "inNormal", NULL);
 
   // PLANET
-  const float mountAmp = 0.3;
-  const float mountFreq = 5;
+  const float mountAmp = 20;
+  const float mountFreq = 0.03;
   const float avgTemp = 7.0;
 
-  vec4 lightPosition = {1.0, 0.0, 0.0, 1.0};
+  vec4 lightPosition = {0.0, 0.0, 0.0, 1.0};
   vec3 surfaceColor = {0.0, 0.4, 0.1};
   vec3 snowColor = {0.8, 0.9, 1.0};
   vec3 sandColor = {0.95, 0.67, 0.26};
@@ -188,6 +190,19 @@ void display(void)
   DrawModel(sphere, planetShader, "inPosition", "inNormal", NULL);
 
   glDisable(GL_STENCIL_TEST);
+
+  // Ocean
+  vec3 oceanColor = {0, 11/255, 255/255};
+
+  glUseProgram(oceanShader);
+  glUniform1f(glGetUniformLocation(oceanShader, "time"), time);
+  glUniform4f(glGetUniformLocation(oceanShader, "lightPosition"), lightPosition.x, lightPosition.y, lightPosition.z,
+              lightPosition.w);
+  glUniform1f(glGetUniformLocation(oceanShader, "avgTemp"), avgTemp);
+  glUniform3f(glGetUniformLocation(oceanShader, "oceanColor"), oceanColor.x, oceanColor.y, oceanColor.z);
+  glUniformMatrix4fv(glGetUniformLocation(oceanShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+  glUniformMatrix4fv(glGetUniformLocation(oceanShader, "modelViewMatrix"), 1, GL_TRUE, planetOcean.m);
+  DrawModel(sphere, oceanShader, "inPosition", "inNormal", NULL);
 
   printError("display");
 

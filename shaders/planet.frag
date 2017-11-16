@@ -111,7 +111,7 @@ float pnoise(vec3 P, vec3 rep)
 
 void main() {
   vec3 ambient, diffuse, finalColor;
-  float kd = 2.0, ka = 0.2;
+  float kd = 0.02, ka = 0.1;
 
   vec4 lightPosition = viewMatrix * lightPosition;
   vec3 lightVector = lightPosition.xyz - vPositionG;
