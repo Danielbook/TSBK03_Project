@@ -45,7 +45,6 @@ void init(void)
   printError("GL inits");
 
   // Load and compile shaders
-//    noiseShader = loadShader("../shaders/noise/classicnoise3D.glsl");
   planetShader = loadShadersG("../shaders/planet.vert", "../shaders/planet.frag", "../shaders/planet.geom");
   sunShader = loadShaders("../shaders/sun.vert", "../shaders/sun.frag");
 
@@ -64,7 +63,7 @@ void display(void)
   // clear the screen
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  a += 0.02;
+  a += 0.01;
 
   time = glutGet(GLUT_ELAPSED_TIME);
 
@@ -85,7 +84,6 @@ void display(void)
   float b = -a * 2;
   float c = a * 5;
   float d = a * 15;
-  float rp = 2;
   float rm = 0.5;
 
   // Calculate matrices in matrix sequences that impose the dependencies.
@@ -93,8 +91,8 @@ void display(void)
                       0, 0, 0,  // and looks at the origin
                       0, 1, 0); // Head is up
   sunPos = Mult(viewMatrix, T(0, 0, 0));
-  planetPos = Mult(sunPos, Mult(Ry(a), T(rp, 0, 0))); // Planet position
-  planetRotPos = Mult(planetPos, Mult(Ry(c), S(0.4, 0.4, 0.4))); // Planet pos + rotation
+  planetPos = Mult(sunPos, Mult(Ry(0), T(3, 0, 0))); // Planet position
+  planetRotPos = Mult(planetPos, Mult(Ry(0), S(0.4, 0.4, 0.4))); // Planet pos + rotation
 
 //  printMat4(planetRotPos);
 
@@ -107,15 +105,15 @@ void display(void)
   // SUN
   const float sunAmp = 0.1;
   const float sunFreq = 80;
-//  mat3 sunNormalMatrix = InverseTranspose(sunPos);
+  mat3 sunNormalMatrix = InverseTranspose(sunPos);
 
   glUseProgram(sunShader);
   glUniform1f(glGetUniformLocation(sunShader, "amplitude"), sunAmp);
   glUniform1f(glGetUniformLocation(sunShader, "frequency"), sunFreq);
   glUniform1f(glGetUniformLocation(sunShader, "time"), time);
   glUniformMatrix4fv(glGetUniformLocation(sunShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
-  glUniformMatrix4fv(glGetUniformLocation(sunShader, "modelviewMatrix"), 1, GL_TRUE, sunPos.m);
-//  glUniformMatrix4fv(glGetUniformLocation(sunShader, "normalMatrix"), 1, GL_TRUE, sunNormalMatrix.m);
+  glUniformMatrix4fv(glGetUniformLocation(sunShader, "modelViewMatrix"), 1, GL_TRUE, sunPos.m);
+  glUniformMatrix4fv(glGetUniformLocation(sunShader, "normalMatrix"), 1, GL_TRUE, sunNormalMatrix.m);
 
   DrawModel(sphere, sunShader, "inPosition", "inNormal", NULL);
 
@@ -135,7 +133,8 @@ void display(void)
   glUniform1f(glGetUniformLocation(planetShader, "amplitude"), mountAmp);
   glUniform1f(glGetUniformLocation(planetShader, "frequency"), mountFreq);
   glUniform1f(glGetUniformLocation(planetShader, "avgTemp"), avgTemp);
-  glUniform4f(glGetUniformLocation(planetShader, "lightPosition"), lightPosition.x, lightPosition.y, lightPosition.z, lightPosition.w);
+  glUniform4f(glGetUniformLocation(planetShader, "lightPosition"), lightPosition.x, lightPosition.y, lightPosition.z,
+              lightPosition.w);
   glUniform3f(glGetUniformLocation(planetShader, "surfaceColor"), surfaceColor.x, surfaceColor.y, surfaceColor.z);
   glUniform3f(glGetUniformLocation(planetShader, "snowColor"), snowColor.x, snowColor.y, snowColor.z);
   glUniform3f(glGetUniformLocation(planetShader, "sandColor"), sandColor.x, sandColor.y, sandColor.z);
@@ -145,29 +144,30 @@ void display(void)
   glUniformMatrix4fv(glGetUniformLocation(planetShader, "modelViewMatrix"), 1, GL_TRUE, planetRotPos.m);
 
 
-  DrawModel(sphere, planetShader, "inPosition", "inNormal", NULL);
+//  DrawModel(sphere, planetShader, "inPosition", "inNormal", NULL);
 
   /*
-  * Stencil testing
+   * Stencil testing
+   * http://ogldev.atspace.co.uk/www/tutorial40/tutorial40.html
   */
 
   // Clear the screen to white
-  //glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+//  glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_STENCIL_TEST);
 
-    glStencilFunc(GL_ALWAYS, 0, 0xFF); // init to 0, camera is not in shadowed area
+  glStencilFunc(GL_ALWAYS, 0, 0xFF); // init to 0, camera is not in shadowed area
 
-    //Increment stencil when entering object
-    glCullFace(GL_FRONT);
-    glStencilOp(GL_KEEP, GL_INCR, GL_KEEP);
+  //Increment stencil when entering object
+  glCullFace(GL_FRONT);
+  glStencilOp(GL_KEEP, GL_INCR, GL_KEEP);
 
-    //Decrement stencil when exiting object
-    glCullFace(GL_BACK);
-    glStencilOp(GL_KEEP, GL_DECR, GL_KEEP);
+  //Decrement stencil when exiting object
+  glCullFace(GL_BACK);
+  glStencilOp(GL_KEEP, GL_DECR, GL_KEEP);
 
-    DrawModel(sphere, planetShader, "inPosition", "inNormal", NULL);
+  DrawModel(sphere, planetShader, "inPosition", "inNormal", NULL);
 
   glDisable(GL_STENCIL_TEST);
 
@@ -188,7 +188,7 @@ int main(int argc, char *argv[])
 {
   glutInit(&argc, argv);
 
-  glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE);
+  glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE | GLUT_STENCIL);
   glutInitWindowSize(W, H);
 
   glutInitContextVersion(3, 2);

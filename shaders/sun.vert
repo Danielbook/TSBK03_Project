@@ -6,7 +6,7 @@ in vec3 inNormal;
 uniform float time;
 uniform float amplitude;
 uniform float frequency;
-uniform mat4 modelviewMatrix;
+uniform mat4 modelViewMatrix;
 //uniform mat3 normalMatrix;
 uniform mat4 projectionMatrix;
 
@@ -118,5 +118,5 @@ void main() {
 //  vNormal = normalize(normalMatrix * inNormal);
   vNormal = inNormal;
 
-  gl_Position = projectionMatrix * modelviewMatrix * vec4( pos, 1.0 );
+  gl_Position = projectionMatrix * modelViewMatrix * vec4( pos, 1.0 );
 }
