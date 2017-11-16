@@ -52,7 +52,7 @@ void init(void)
   glClearColor(0.0, 0.0, 0.0, 0);
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_CULL_FACE);
-  projectionMatrix = frustum(-1, 1, -1, 1, 0.5, 100.0);
+  projectionMatrix = frustum(-1, 1, -1, 1, 1.0, 1000.0);
   printError("GL inits");
 
   // Load and compile shaders
@@ -63,7 +63,7 @@ void init(void)
   printError("init shader");
 
   // Upload geometry to the GPU:
-  sphere = LoadModelPlus("../assets/spherelarge128.obj"); // Sphere
+  sphere = LoadModelPlus("../assets/bestSphere.obj"); // Sphere
 
   printError("load models");
 
@@ -213,6 +213,7 @@ void reshape(GLsizei w, GLsizei h) {
   glViewport(0, 0, w, h);
   GLfloat ratio = (GLfloat) w / (GLfloat) h;
   projectionMatrix = perspective(90, ratio, 1.0, 1000);
+
 }
 
 int main(int argc, char *argv[])
