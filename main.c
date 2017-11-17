@@ -88,21 +88,21 @@ void init(void)
     triangles[sphere->numIndices / 3].triangle[2] = sphere->indexArray[i + 2];
 
 //    printf("Triangle: %i: ", i / 3 + 1);
-    printf("(%i, ", triangles[sphere->numIndices / 3].triangle[0]);
-    printf("%i, ", triangles[sphere->numIndices / 3].triangle[1]);
-    printf("%i)\n", triangles[sphere->numIndices / 3].triangle[2]);
+//    printf("(%i, ", triangles[sphere->numIndices / 3].triangle[0]);
+//    printf("%i, ", triangles[sphere->numIndices / 3].triangle[1]);
+//    printf("%i)\n", triangles[sphere->numIndices / 3].triangle[2]);
   }
 
     vertices = malloc(sizeof(vertexArray) * sphere->numVertices);
 
     for (int i = 0; i < sphere->numVertices; i+=3) {
         vertices[i].vertex[0] = sphere->vertexArray[i];
-        vertices[i+1].vertex[0] = sphere->vertexArray[i+1];
-        vertices[i+2].vertex[0] = sphere->vertexArray[i+2];
+        vertices[i+1].vertex[1] = sphere->vertexArray[i+1];
+        vertices[i+2].vertex[2] = sphere->vertexArray[i+2];
 
-        printf("(%f, ", vertices[i].vertex[0]);
-        printf("%f, ", vertices[i+1].vertex[1]);
-        printf("%f)\n", vertices[i+2].vertex[2]);
+//        printf("(%f, ", vertices[i].vertex[0]);
+//        printf("%f, ", vertices[i+1].vertex[1]);
+//        printf("%f)\n", vertices[i+2].vertex[2]);
     }
 
 
