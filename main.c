@@ -2,6 +2,7 @@
 
 #include <OpenGL/gl3.h>
 #include <OpenGL/glu.h>
+#include <loadobj.h>
 #include "MicroGlut.h"
 //uses framework Cocoa
 #else
@@ -36,6 +37,11 @@ GLfloat a;
 
 int frame = 0, time, timebase = 0, deltaTime = 0, startTime = 0;
 
+typedef struct
+{
+    int triangle[3];
+} triangleArray;
+
 // This function is called whenever the computer is idle
 // As soon as the machine is idle, ask GLUT to trigger rendering of a new frame
 void onTimer(int value)
@@ -43,6 +49,8 @@ void onTimer(int value)
   glutPostRedisplay();
   glutTimerFunc(5, &onTimer, value);
 }
+
+triangleArray *triangles = NULL;
 
 void init(void)
 {
@@ -64,6 +72,19 @@ void init(void)
 
   // Upload geometry to the GPU:
   sphere = LoadModelPlus("../assets/bestSphere.obj"); // Sphere
+
+  triangles = malloc(sizeof(triangleArray) * sphere->numIndices / 3);
+
+  for (int i = 0; i < sphere->numIndices; i += 3) {
+    triangles[sphere->numIndices / 3].triangle[0] = sphere->indexArray[i];
+    triangles[sphere->numIndices / 3].triangle[1] = sphere->indexArray[i + 1];
+    triangles[sphere->numIndices / 3].triangle[2] = sphere->indexArray[i + 2];
+
+//    printf("Triangle: %i: ", i / 3 + 1);
+    printf("(%i, ", triangles[sphere->numIndices / 3].triangle[0]);
+    printf("%i, ", triangles[sphere->numIndices / 3].triangle[1]);
+    printf("%i)\n", triangles[sphere->numIndices / 3].triangle[2]);
+  }
 
   printError("load models");
 
@@ -192,7 +213,7 @@ void display(void)
   glDisable(GL_STENCIL_TEST);
 
   // Ocean
-  vec3 oceanColor = {0, 11/255, 255/255};
+  vec3 oceanColor = {0, 11 / 255, 255 / 255};
 
   glUseProgram(oceanShader);
   glUniform1f(glGetUniformLocation(oceanShader, "time"), time);
@@ -209,7 +230,8 @@ void display(void)
   glutSwapBuffers();
 }
 
-void reshape(GLsizei w, GLsizei h) {
+void reshape(GLsizei w, GLsizei h)
+{
   glViewport(0, 0, w, h);
   GLfloat ratio = (GLfloat) w / (GLfloat) h;
   projectionMatrix = perspective(90, ratio, 1.0, 1000);
