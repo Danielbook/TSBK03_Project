@@ -42,6 +42,11 @@ typedef struct
     int triangle[3];
 } triangleArray;
 
+typedef struct
+{
+    float vertex[3];
+} vertexArray;
+
 // This function is called whenever the computer is idle
 // As soon as the machine is idle, ask GLUT to trigger rendering of a new frame
 void onTimer(int value)
@@ -51,6 +56,8 @@ void onTimer(int value)
 }
 
 triangleArray *triangles = NULL;
+vertexArray *vertices = NULL;
+
 
 void init(void)
 {
@@ -86,7 +93,21 @@ void init(void)
     printf("%i)\n", triangles[sphere->numIndices / 3].triangle[2]);
   }
 
-  printError("load models");
+    vertices = malloc(sizeof(vertexArray) * sphere->numVertices);
+
+    for (int i = 0; i < sphere->numVertices; i+=3) {
+        vertices[i].vertex[0] = sphere->vertexArray[i];
+        vertices[i+1].vertex[0] = sphere->vertexArray[i+1];
+        vertices[i+2].vertex[0] = sphere->vertexArray[i+2];
+
+        printf("(%f, ", vertices[i].vertex[0]);
+        printf("%f, ", vertices[i+1].vertex[1]);
+        printf("%f)\n", vertices[i+2].vertex[2]);
+    }
+
+
+
+    printError("load models");
 
   glutTimerFunc(5, &onTimer, 0);
 
