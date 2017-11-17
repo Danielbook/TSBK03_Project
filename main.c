@@ -35,7 +35,7 @@ GLuint texture;
 
 GLfloat a;
 
-int frame = 0, time, timebase = 0, deltaTime = 0, startTime = 0;
+int frame = 0, time, timebase = 0, deltaTime = 0, startTime = 0, nVertices = 0;
 
 typedef struct
 {
@@ -47,6 +47,7 @@ typedef struct
     float vertex[3];
 } vertexArray;
 
+float vertArray;
 // This function is called whenever the computer is idle
 // As soon as the machine is idle, ask GLUT to trigger rendering of a new frame
 void onTimer(int value)
@@ -93,9 +94,11 @@ void init(void)
 //    printf("%i)\n", triangles[sphere->numIndices / 3].triangle[2]);
   }
 
-    vertices = malloc(sizeof(vertexArray) * sphere->numVertices);
+    nVertices = sphere->numVertices;
+    vertices = malloc(sizeof(vertexArray) * nVertices);
 
-    for (int i = 0; i < sphere->numVertices; i+=3) {
+    
+    for (int i = 0; i < nVertices; i+=3) {
         vertices[i].vertex[0] = sphere->vertexArray[i];
         vertices[i+1].vertex[1] = sphere->vertexArray[i+1];
         vertices[i+2].vertex[2] = sphere->vertexArray[i+2];
@@ -204,6 +207,7 @@ void display(void)
   glUniformMatrix4fv(glGetUniformLocation(planetShader, "viewMatrix"), 1, GL_TRUE, viewMatrix.m);
   glUniformMatrix3fv(glGetUniformLocation(planetShader, "normalMatrix"), 1, GL_TRUE, planetNormalMatrix.m);
   glUniformMatrix4fv(glGetUniformLocation(planetShader, "modelViewMatrix"), 1, GL_TRUE, planetRotPos.m);
+  glUniform1fv(glGetUniformLocation(planetShader, "vertices"), nVertices, vertices);
 
 
 //  DrawModel(sphere, planetShader, "inPosition", "inNormal", NULL);
