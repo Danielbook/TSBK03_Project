@@ -33,6 +33,8 @@ GLuint planetShader, sunShader, oceanShader;
 // * Texture(s)
 GLuint texture;
 
+GLuint data[3];
+
 GLfloat a;
 
 int frame = 0, time, timebase = 0, deltaTime = 0, startTime = 0, nVertices = 0;
@@ -256,6 +258,36 @@ void display(void)
   vec3 sandColor = {0.95, 0.67, 0.26};
 
   mat3 planetNormalMatrix = InverseTranspose(planetRotPos);
+
+
+  /*
+   *  Testing sending data to gs with VAO
+   */
+
+  vec3 tempColor = {1.0, 0.0, 0.0};
+  //Soon-to-be vertex data that will be passed to shaders
+  data[0] = tempColor.x;
+  data[1] = tempColor.y;
+  data[2] = tempColor.z;
+
+  //Create VAO
+  GLuint vao = 0;
+  glGenVertexArrays(1, &vao);
+  glBindVertexArray(vao);
+  glBindBuffer(GL_ARRAY_BUFFER, data);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL); //(locationId, size, type, normalizedBool, .., ..)
+
+  //Enable VAO
+  glEnableVertexAttribArray(0); //Same locationID as the VAO-pointer above
+
+  //Create VBO
+//  GLuint a_vbo = 0;
+//  glGenBuffers(1, &a_vbo);
+//  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, a_vbo);
+//  glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * sizeof(float), &data, GL_STATIC_DRAW );
+
+
+
 
   glUseProgram(planetShader);
   glUniform1f(glGetUniformLocation(planetShader, "amplitude"), mountAmp);

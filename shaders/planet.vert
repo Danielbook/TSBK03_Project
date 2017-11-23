@@ -8,6 +8,9 @@ uniform mat4 modelViewMatrix;
 uniform mat3 normalMatrix;
 uniform mat4 projectionMatrix;
 
+//VAO
+layout (location = 0) in vec3 vao_color;
+
 out vec3 vNormal;
 out vec3 vPosition;
 out float noise;
@@ -107,7 +110,8 @@ float pnoise(vec3 P, vec3 rep)
 }
 
 void main() {
-	noise = amplitude*pnoise(frequency*inPosition, vec3(20.0));
+
+  noise = amplitude*pnoise(frequency*inPosition, vec3(20.0));
 
   vec3 pos = inPosition + noise * inNormal;
 
