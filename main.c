@@ -81,12 +81,14 @@ void init(void)
   // Upload geometry to the GPU:
   sphere = LoadModelPlus("../assets/bestSphere.obj"); // Sphere
 
-  triangles = malloc(sizeof(triangleArray) * sphere->numIndices / 3);
+  int trianglesSize = sphere->numIndices / 3;
+
+  triangles = malloc(sizeof(triangleArray) * trianglesSize);
 
   for (int i = 0; i < sphere->numIndices; i += 3) {
-    triangles[sphere->numIndices / 3].triangle[0] = sphere->indexArray[i];
-    triangles[sphere->numIndices / 3].triangle[1] = sphere->indexArray[i + 1];
-    triangles[sphere->numIndices / 3].triangle[2] = sphere->indexArray[i + 2];
+    triangles[i].triangle[0] = sphere->indexArray[i];
+    triangles[i].triangle[1] = sphere->indexArray[i + 1];
+    triangles[i].triangle[2] = sphere->indexArray[i + 2];
 
 //    printf("Triangle: %i: ", i / 3 + 1);
 //    printf("(%i, ", triangles[sphere->numIndices / 3].triangle[0]);
@@ -106,11 +108,72 @@ void init(void)
 //        printf("(%f, ", vertices[i].vertex[0]);
 //        printf("%f, ", vertices[i+1].vertex[1]);
 //        printf("%f)\n", vertices[i+2].vertex[2]);
+  }
+
+  for(int i = 0; i < 1; i++) {
+    for(int j = 0; j < trianglesSize; j++) {
+      // Edge 1
+      if(triangles[i].triangle[0] == triangles[j].triangle[0] && triangles[i].triangle[1] == triangles[j].triangle[1] ||
+         triangles[i].triangle[0] == triangles[j].triangle[1] && triangles[i].triangle[1] == triangles[j].triangle[2] ||
+         triangles[i].triangle[0] == triangles[j].triangle[2] && triangles[i].triangle[1] == triangles[j].triangle[0]) {
+
+        printf("Case 1!\n");
+        printf("Triangle %i: ", i);
+        printf("{%i, ", triangles[i].triangle[0]);
+        printf("%i, ", triangles[i].triangle[1]);
+        printf("%i}\n",triangles[i].triangle[2]);
+
+        printf("Triangle %i: ", j);
+        printf("{%i, ", triangles[j].triangle[0]);
+        printf("%i, ", triangles[j].triangle[1]);
+        printf("%i}\n",triangles[j].triangle[2]);
+
+        printf("Unique vertice: %i", triangles[j].triangle[0]);
+        printf("\n");
+      }
+      // Edge 2
+      if(triangles[i].triangle[1] == triangles[j].triangle[1] && triangles[i].triangle[2] == triangles[j].triangle[2] ||
+         triangles[i].triangle[1] == triangles[j].triangle[2] && triangles[i].triangle[2] == triangles[j].triangle[0] ||
+         triangles[i].triangle[1] == triangles[j].triangle[0] && triangles[i].triangle[2] == triangles[j].triangle[1]) {
+
+        printf("Case 2!\n");
+        printf("Triangle %i: ", i);
+        printf("{%i, ", triangles[i].triangle[0]);
+        printf("%i, ", triangles[i].triangle[1]);
+        printf("%i}\n",triangles[i].triangle[2]);
+
+        printf("Triangle %i: ", j);
+        printf("{%i, ", triangles[j].triangle[0]);
+        printf("%i, ", triangles[j].triangle[1]);
+        printf("%i}\n",triangles[j].triangle[2]);
+
+        printf("Unique vertice: %i", triangles[j].triangle[1]);
+        printf("\n");
+      }
+      // Edge 3
+      if(triangles[i].triangle[2] == triangles[j].triangle[2] && triangles[i].triangle[0] == triangles[j].triangle[0] ||
+         triangles[i].triangle[2] == triangles[j].triangle[1] && triangles[i].triangle[0] == triangles[j].triangle[2] ||
+         triangles[i].triangle[2] == triangles[j].triangle[0] && triangles[i].triangle[0] == triangles[j].triangle[1]) {
+
+        printf("Case 3!\n");
+        printf("Triangle %i: ", i);
+        printf("{%i, ", triangles[i].triangle[0]);
+        printf("%i, ", triangles[i].triangle[1]);
+        printf("%i}\n",triangles[i].triangle[2]);
+
+        printf("Triangle %i: ", j);
+        printf("{%i, ", triangles[j].triangle[0]);
+        printf("%i, ", triangles[j].triangle[1]);
+        printf("%i}\n",triangles[j].triangle[2]);
+
+        printf("Unique vertice: %i", triangles[j].triangle[2]);
+        printf("\n");
+      }
     }
+  }
 
 
-
-    printError("load models");
+  printError("load models");
 
   glutTimerFunc(5, &onTimer, 0);
 
