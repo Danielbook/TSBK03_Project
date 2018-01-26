@@ -188,6 +188,8 @@ void drawObjects(GLuint shader)
   glUniformMatrix3fv(glGetUniformLocation(planetShaderId, "normalMatrix"), 1, GL_TRUE, planetNormalMatrix.m);
   glUniformMatrix4fv(glGetUniformLocation(planetShaderId, "modelViewMatrix"), 1, GL_TRUE, planetRotPos.m);
 
+  DrawModel(sphere, planetShaderId, "inPosition", "inNormal", NULL);
+
   // Ocean
   vec3 oceanColor = {0, 11 / 255, 255 / 255};
 
@@ -220,10 +222,12 @@ void renderScene(void)
 
   updatePositions();
 
+  viewMatrix = lookAt(p_light.x, p_light.y, p_light.z,
+                      l_light.x, l_light.y, l_light.z,
+                      0,1,0);
+
   setTextureMatrix();
 
-  viewMatrix = lookAt(p_light.x, p_light.y, p_light.z,
-                      l_light.x, l_light.y, l_light.z, 0,1,0);
 
   // 1. Render scene to FBO
 
