@@ -22,7 +22,7 @@
 
 // Projection matrix, set by a call to perspective().
 mat4 projectionMatrix;
-mat4 viewMatrix;
+mat4 viewMatrix, textureMatrix;
 
 Point3D cam, point;
 
@@ -35,14 +35,21 @@ GLuint projTexMapUniform;
 
 FBOstruct *fbo;
 
+//Light mouvement circle radius
+float light_mvnt = 40.0f; // At 30 we get edge artifacts
+
 //Light position
 Point3D p_light = {40,20,0};
 
+//Light lookAt
+Point3D l_light = {0,3,-10};
+
 //Camera position
-Point3D p_camera = {32, 20, 0};
+Point3D p_camera = {0, 300, 100};
 
 //Camera lookAt
-Point3D l_camera = {2, 0, -10};
+Point3D l_camera = {0, 1, 0};
+
 
 // * Texture(s)
 GLuint texture;
@@ -50,6 +57,7 @@ GLuint texture;
 GLuint data[3];
 
 GLfloat a;
+
 
 int frame = 0, time, timebase = 0, deltaTime = 0, startTime = 0, nVertices = 0;
 
@@ -72,9 +80,6 @@ void onTimer(int value)
   glutPostRedisplay();
   glutTimerFunc(5, &onTimer, value);
 }
-
-triangleArray *triangles = NULL;
-vertexArray *vertices = NULL;
 
 
 void loadShadowShaders()
@@ -112,11 +117,12 @@ void init(void)
   cam = SetVector(0, 300, 100);
   point = SetVector(0, 1, 0);
 
-  zprInit(&viewMatrix, cam, point);
+  zprInit(&viewMatrix, p_camera, l_camera);
 }
 
 void updatePositions() {
-
+  p_light.x = light_mvnt * cos(glutGet(GLUT_ELAPSED_TIME)/1000.0);
+  p_light.z = light_mvnt * sin(glutGet(GLUT_ELAPSED_TIME)/1000.0);
 }
 
 mat4 sunPos;
@@ -140,6 +146,8 @@ void drawObjects(GLuint shader)
   // Enable backface culling
   glEnable(GL_CULL_FACE);
   glCullFace(GL_BACK);
+
+
 
   // SUN
   const float sunAmp = 0.1;
@@ -193,11 +201,29 @@ void drawObjects(GLuint shader)
   DrawModel(sphere, oceanShaderId, "inPosition", "inNormal", NULL);
 }
 
+
+void setTextureMatrix(void)
+{
+  mat4 scaleBiasMatrix;
+
+  IdentityMatrix(textureMatrix);
+
+// Scale and bias transform, moving from unit cube [-1,1] to [0,1]
+  scaleBiasMatrix = Mult(T(0.5, 0.5, 0.0), S(0.5, 0.5, 1.0));
+  textureMatrix = Mult(Mult(scaleBiasMatrix, projectionMatrix), viewMatrix);
+  // Multiply modelview and transformation matrices
+}
+
 void renderScene(void)
 {
   printError("Render Scene");
 
   updatePositions();
+
+  setTextureMatrix();
+
+  viewMatrix = lookAt(p_light.x, p_light.y, p_light.z,
+                      l_light.x, l_light.y, l_light.z, 0,1,0);
 
   // 1. Render scene to FBO
 
@@ -234,7 +260,7 @@ void renderScene(void)
   glBindTexture(GL_TEXTURE_2D, fbo->depth);
 
   // Setup the modelview from the camera
-  sunPos = lookAt(p_camera.x, p_camera.y, p_camera.z,
+  viewMatrix = lookAt(p_camera.x, p_camera.y, p_camera.z,
                   l_camera.x, l_camera.y, l_camera.z, 0, 1, 0);
 
   glCullFace(GL_BACK);
