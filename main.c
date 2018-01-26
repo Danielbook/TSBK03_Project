@@ -265,7 +265,11 @@ void renderScene(void)
 
   // Setup the modelview from the camera
   viewMatrix = lookAt(p_camera.x, p_camera.y, p_camera.z,
-                  l_camera.x, l_camera.y, l_camera.z, 0, 1, 0);
+                      l_camera.x, l_camera.y, l_camera.z,
+                      0, 1, 0);
+
+  zprInit(&viewMatrix, p_camera, l_camera);
+
 
   glCullFace(GL_BACK);
   drawObjects(projTexShaderId);
