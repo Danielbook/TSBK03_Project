@@ -20,6 +20,8 @@
 #define RENDER_WIDTH 1000
 #define RENDER_HEIGHT 1000
 
+#define TEX_UNIT 0
+
 // Projection matrix, set by a call to perspective().
 mat4 projectionMatrix;
 mat4 viewMatrix, textureMatrix;
@@ -114,10 +116,10 @@ void init(void)
 
   glutTimerFunc(5, &onTimer, 0);
 
-  cam = SetVector(0, 300, 100);
-  point = SetVector(0, 1, 0);
+  cam = SetVector(p_camera.x, p_camera.y, p_camera.z);
+  point = SetVector(l_camera.x, l_camera.y, l_camera.z);
 
-  zprInit(&viewMatrix, p_camera, l_camera);
+  zprInit(&viewMatrix, cam, point);
 }
 
 void updatePositions() {
@@ -238,11 +240,12 @@ void renderScene(void)
 
   //Using the simple shader
   glUseProgram(projTexShaderId);
-  glUniform1i(projTexMapUniform, 0);
-  glActiveTexture(GL_TEXTURE0 + 0);
+  glUniform1i(projTexMapUniform, TEX_UNIT);
+  glActiveTexture(GL_TEXTURE0 + TEX_UNIT);
   glBindTexture(GL_TEXTURE_2D, 0);
 
   drawObjects(planetShaderId);
+  glFlush();
 
   //2. Render from camera.
   // Now rendering from the camera POV
@@ -259,8 +262,8 @@ void renderScene(void)
 
   //Using the projTex shader
   glUseProgram(projTexShaderId);
-  glUniform1i(projTexMapUniform, 0);
-  glActiveTexture(GL_TEXTURE0 + 0);
+  glUniform1i(projTexMapUniform, TEX_UNIT);
+  glActiveTexture(GL_TEXTURE0 + TEX_UNIT);
   glBindTexture(GL_TEXTURE_2D, fbo->depth);
 
   // Setup the modelview from the camera
@@ -268,8 +271,7 @@ void renderScene(void)
                       l_camera.x, l_camera.y, l_camera.z,
                       0, 1, 0);
 
-  zprInit(&viewMatrix, p_camera, l_camera);
-
+  updateCameraMatrix(NULL);
 
   glCullFace(GL_BACK);
   drawObjects(projTexShaderId);
