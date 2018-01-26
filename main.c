@@ -31,7 +31,7 @@ Point3D cam, point;
 // * Model(s)
 Model *sphere;
 // * Reference(s) to shader program(s)
-GLuint planetShaderId, sunShaderId, oceanShaderId, projTexShaderId;
+GLuint planetShaderId, sunShaderId, oceanShaderId, moonShaderId, projTexShaderId;
 // Use to activate/disable projTexShader
 GLuint projTexMapUniform;
 
@@ -94,6 +94,7 @@ void loadShadowShaders()
   planetShaderId = loadShaders("../shaders/planet.vert", "../shaders/planet.frag");
   sunShaderId = loadShaders("../shaders/sun.vert", "../shaders/sun.frag");
   oceanShaderId = loadShaders("../shaders/ocean.vert", "../shaders/ocean.frag");
+  moonShaderId = loadShaders("../shaders/moon.vert", "../shaders/moon.frag");
 
   printError("init shader");
 }
@@ -131,7 +132,7 @@ mat4 sunPos;
 
 void drawObjects(GLuint shader)
 {
-  mat4 planetPos, planetRotPos, planetOcean;
+  mat4 planetPos, planetRotPos, planetOcean, moonPos;
 
   time = glutGet(GLUT_ELAPSED_TIME);
 
@@ -142,6 +143,7 @@ void drawObjects(GLuint shader)
   planetPos = Mult(sunPos, Mult(Ry(0), T(200, 0, 0))); // Planet position
   planetRotPos = Mult(planetPos, Mult(Ry(0.005*time), S(0.4, 0.4, 0.4))); // Planet pos + rotation
   planetOcean = Mult(planetRotPos, S(0.97, 0.97, 0.97)); // Planet pos + rotation
+  moonPos = Mult(planetPos,Mult(Ry(0), T(200, 0, 0))); // Moon rotation
 
   // Enable Z-buffering
   glEnable(GL_DEPTH_TEST);
@@ -203,6 +205,22 @@ void drawObjects(GLuint shader)
   glUniformMatrix4fv(glGetUniformLocation(oceanShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
   glUniformMatrix4fv(glGetUniformLocation(oceanShaderId, "modelViewMatrix"), 1, GL_TRUE, planetOcean.m);
   DrawModel(sphere, oceanShaderId, "inPosition", "inNormal", NULL);
+
+  // Moon
+  vec3 moonColor = {0, 11 / 255, 11 / 255};
+  const float moonMountFreq = 0.01;
+  const float moonMountAmp = 0.1;
+
+  glUseProgram(moonShaderId);
+  glUniform1f(glGetUniformLocation(moonShaderId, "time"), time);
+  glUniform1f(glGetUniformLocation(moonShaderId, "moonMountFreq"), moonMountFreq);
+  glUniform1f(glGetUniformLocation(moonShaderId, "moonMountAmp"), moonMountAmp);
+  glUniform3f(glGetUniformLocation(moonShaderId, "lightPosition"), p_light.x, p_light.y, p_light.z);
+  glUniform1f(glGetUniformLocation(moonShaderId, "avgTemp"), avgTemp);
+  glUniform3f(glGetUniformLocation(moonShaderId, "moonColor"), moonColor.x, moonColor.y, moonColor.z);
+  glUniformMatrix4fv(glGetUniformLocation(moonShaderId, "modelViewMatrix"), 1, GL_TRUE, moonPos.m);
+  glUniformMatrix4fv(glGetUniformLocation(moonShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+  DrawModel(sphere, moonShaderId, "inPosition", "inNormal", NULL);
 }
 
 
@@ -222,7 +240,7 @@ void renderScene(void)
 {
   printError("Render Scene");
 
-  updatePositions();
+//  updatePositions();
 
   viewMatrix = lookAt(p_light.x, p_light.y, p_light.z,
                       l_light.x, l_light.y, l_light.z,
@@ -245,7 +263,6 @@ void renderScene(void)
   glBindTexture(GL_TEXTURE_2D, 0);
 
   drawObjects(planetShaderId);
-  glFlush();
 
   //2. Render from camera.
   // Now rendering from the camera POV
