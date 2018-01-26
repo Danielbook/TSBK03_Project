@@ -17,8 +17,8 @@
 #include "LoadTGA.h"
 
 // initial width and heights
-#define W 1000
-#define H 1000
+#define RENDER_WIDTH 1000
+#define RENDER_HEIGHT 1000
 
 // Projection matrix, set by a call to perspective().
 mat4 projectionMatrix;
@@ -29,7 +29,21 @@ Point3D cam, point;
 // * Model(s)
 Model *sphere;
 // * Reference(s) to shader program(s)
-GLuint planetShader, sunShader, oceanShader;
+GLuint planetShaderId, sunShaderId, oceanShaderId, projTexShaderId;
+// Use to activate/disable projTexShader
+GLuint projTexMapUniform;
+
+FBOstruct *fbo;
+
+//Light position
+Point3D p_light = {40,20,0};
+
+//Camera position
+Point3D p_camera = {32, 20, 0};
+
+//Camera lookAt
+Point3D l_camera = {2, 0, -10};
+
 // * Texture(s)
 GLuint texture;
 
@@ -50,6 +64,7 @@ typedef struct
 } vertexArray;
 
 float vertArray;
+
 // This function is called whenever the computer is idle
 // As soon as the machine is idle, ask GLUT to trigger rendering of a new frame
 void onTimer(int value)
@@ -62,6 +77,20 @@ triangleArray *triangles = NULL;
 vertexArray *vertices = NULL;
 
 
+void loadShadowShaders()
+{
+  // Shadow map
+  projTexShaderId = loadShaders("../shaders/shadowmap.vert", "../shaders/shadowmap.frag");
+  projTexMapUniform = glGetUniformLocation(projTexShaderId, "textureUnit");
+
+  // Load and compile shaders
+  planetShaderId = loadShaders("../shaders/planet.vert", "../shaders/planet.frag");
+  sunShaderId = loadShaders("../shaders/sun.vert", "../shaders/sun.frag");
+  oceanShaderId = loadShaders("../shaders/ocean.vert", "../shaders/ocean.frag");
+
+  printError("init shader");
+}
+
 void init(void)
 {
   dumpInfo();
@@ -73,107 +102,8 @@ void init(void)
   projectionMatrix = frustum(-1, 1, -1, 1, 1.0, 1000.0);
   printError("GL inits");
 
-  // Load and compile shaders
-  planetShader = loadShadersG("../shaders/planet.vert", "../shaders/planet.frag", "../shaders/planet.geom");
-  sunShader = loadShaders("../shaders/sun.vert", "../shaders/sun.frag");
-  oceanShader = loadShaders("../shaders/ocean.vert", "../shaders/ocean.frag");
-
-  printError("init shader");
-
   // Upload geometry to the GPU:
-  sphere = LoadModelPlus("../assets/bestSphere.obj"); // Sphere
-
-  int trianglesSize = sphere->numIndices / 3;
-
-  triangles = malloc(sizeof(triangleArray) * trianglesSize);
-
-  for (int i = 0; i < sphere->numIndices; i += 3) {
-    triangles[i].triangle[0] = sphere->indexArray[i];
-    triangles[i].triangle[1] = sphere->indexArray[i + 1];
-    triangles[i].triangle[2] = sphere->indexArray[i + 2];
-
-//    printf("Triangle: %i: ", i / 3 + 1);
-//    printf("(%i, ", triangles[sphere->numIndices / 3].triangle[0]);
-//    printf("%i, ", triangles[sphere->numIndices / 3].triangle[1]);
-//    printf("%i)\n", triangles[sphere->numIndices / 3].triangle[2]);
-  }
-
-    nVertices = sphere->numVertices;
-    vertices = malloc(sizeof(vertexArray) * nVertices);
-
-    
-    for (int i = 0; i < nVertices; i+=3) {
-        vertices[i].vertex[0] = sphere->vertexArray[i];
-        vertices[i+1].vertex[1] = sphere->vertexArray[i+1];
-        vertices[i+2].vertex[2] = sphere->vertexArray[i+2];
-
-//        printf("(%f, ", vertices[i].vertex[0]);
-//        printf("%f, ", vertices[i+1].vertex[1]);
-//        printf("%f)\n", vertices[i+2].vertex[2]);
-  }
-
-  for(int i = 0; i < 1; i++) {
-    for(int j = 0; j < trianglesSize; j++) {
-      // Edge 1
-      if(triangles[i].triangle[0] == triangles[j].triangle[0] && triangles[i].triangle[1] == triangles[j].triangle[1] ||
-         triangles[i].triangle[0] == triangles[j].triangle[1] && triangles[i].triangle[1] == triangles[j].triangle[2] ||
-         triangles[i].triangle[0] == triangles[j].triangle[2] && triangles[i].triangle[1] == triangles[j].triangle[0]) {
-
-        printf("Case 1!\n");
-        printf("Triangle %i: ", i);
-        printf("{%i, ", triangles[i].triangle[0]);
-        printf("%i, ", triangles[i].triangle[1]);
-        printf("%i}\n",triangles[i].triangle[2]);
-
-        printf("Triangle %i: ", j);
-        printf("{%i, ", triangles[j].triangle[0]);
-        printf("%i, ", triangles[j].triangle[1]);
-        printf("%i}\n",triangles[j].triangle[2]);
-
-        printf("Unique vertice: %i", triangles[j].triangle[0]);
-        printf("\n");
-      }
-      // Edge 2
-      if(triangles[i].triangle[1] == triangles[j].triangle[1] && triangles[i].triangle[2] == triangles[j].triangle[2] ||
-         triangles[i].triangle[1] == triangles[j].triangle[2] && triangles[i].triangle[2] == triangles[j].triangle[0] ||
-         triangles[i].triangle[1] == triangles[j].triangle[0] && triangles[i].triangle[2] == triangles[j].triangle[1]) {
-
-        printf("Case 2!\n");
-        printf("Triangle %i: ", i);
-        printf("{%i, ", triangles[i].triangle[0]);
-        printf("%i, ", triangles[i].triangle[1]);
-        printf("%i}\n",triangles[i].triangle[2]);
-
-        printf("Triangle %i: ", j);
-        printf("{%i, ", triangles[j].triangle[0]);
-        printf("%i, ", triangles[j].triangle[1]);
-        printf("%i}\n",triangles[j].triangle[2]);
-
-        printf("Unique vertice: %i", triangles[j].triangle[1]);
-        printf("\n");
-      }
-      // Edge 3
-      if(triangles[i].triangle[2] == triangles[j].triangle[2] && triangles[i].triangle[0] == triangles[j].triangle[0] ||
-         triangles[i].triangle[2] == triangles[j].triangle[1] && triangles[i].triangle[0] == triangles[j].triangle[2] ||
-         triangles[i].triangle[2] == triangles[j].triangle[0] && triangles[i].triangle[0] == triangles[j].triangle[1]) {
-
-        printf("Case 3!\n");
-        printf("Triangle %i: ", i);
-        printf("{%i, ", triangles[i].triangle[0]);
-        printf("%i, ", triangles[i].triangle[1]);
-        printf("%i}\n",triangles[i].triangle[2]);
-
-        printf("Triangle %i: ", j);
-        printf("{%i, ", triangles[j].triangle[0]);
-        printf("%i, ", triangles[j].triangle[1]);
-        printf("%i}\n",triangles[j].triangle[2]);
-
-        printf("Unique vertice: %i", triangles[j].triangle[2]);
-        printf("\n");
-      }
-    }
-  }
-
+  sphere = LoadModelPlus("../assets/newSphere.obj"); // Sphere
 
   printError("load models");
 
@@ -185,46 +115,25 @@ void init(void)
   zprInit(&viewMatrix, cam, point);
 }
 
-void display(void)
+void updatePositions() {
+
+}
+
+mat4 sunPos;
+
+void drawObjects(GLuint shader)
 {
-  printError("pre display");
-
-  // clear the screen
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-  a += 0.01;
+  mat4 planetPos, planetRotPos, planetOcean;
 
   time = glutGet(GLUT_ELAPSED_TIME);
 
   deltaTime = time - startTime;
   startTime = time;
 
-//  frame++;
-//
-//    // Print FPS
-//    if (time - timebase > 1000) {
-//        printf("FPS: %4.2f\n", frame * 1000.0 / (time - timebase));
-//        timebase = time;
-//        frame = 0;
-//    }
-
-  mat4 sunPos, planetPos, planetRotPos, planetOcean;
-
-  float b = -a * 2;
-  float c = a * 5;
-  float d = a * 15;
-  float rm = 0.5;
-
-  // Calculate matrices in matrix sequences that impose the dependencies.
-//  viewMatrix = lookAt(0, 2, 4,  // Camera is set in in World Space
-//                      0, 0, 0,  // and looks at the origin
-//                      0, 1, 0); // Head is up
   sunPos = Mult(viewMatrix, T(0, 0, 0));
   planetPos = Mult(sunPos, Mult(Ry(0), T(200, 0, 0))); // Planet position
-  planetRotPos = Mult(planetPos, Mult(Ry(0), S(0.4, 0.4, 0.4))); // Planet pos + rotation
+  planetRotPos = Mult(planetPos, Mult(Ry(0.005*time), S(0.4, 0.4, 0.4))); // Planet pos + rotation
   planetOcean = Mult(planetRotPos, S(0.97, 0.97, 0.97)); // Planet pos + rotation
-
-//  printMat4(planetRotPos);
 
   // Enable Z-buffering
   glEnable(GL_DEPTH_TEST);
@@ -237,75 +146,125 @@ void display(void)
   const float sunFreq = 80;
   mat3 sunNormalMatrix = InverseTranspose(sunPos);
 
-  glUseProgram(sunShader);
-  glUniform1f(glGetUniformLocation(sunShader, "amplitude"), sunAmp);
-  glUniform1f(glGetUniformLocation(sunShader, "frequency"), sunFreq);
-  glUniform1f(glGetUniformLocation(sunShader, "time"), time);
-  glUniformMatrix4fv(glGetUniformLocation(sunShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
-  glUniformMatrix4fv(glGetUniformLocation(sunShader, "modelViewMatrix"), 1, GL_TRUE, sunPos.m);
-  glUniformMatrix4fv(glGetUniformLocation(sunShader, "normalMatrix"), 1, GL_TRUE, sunNormalMatrix.m);
+  glUseProgram(sunShaderId);
+  glUniform1f(glGetUniformLocation(sunShaderId, "amplitude"), sunAmp);
+  glUniform1f(glGetUniformLocation(sunShaderId, "frequency"), sunFreq);
+  glUniform1f(glGetUniformLocation(sunShaderId, "time"), time);
+  glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+  glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "modelViewMatrix"), 1, GL_TRUE, sunPos.m);
+  glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "normalMatrix"), 1, GL_TRUE, sunNormalMatrix.m);
 
-  DrawModel(sphere, sunShader, "inPosition", "inNormal", NULL);
+  DrawModel(sphere, sunShaderId, "inPosition", "inNormal", NULL);
 
   // PLANET
   const float mountAmp = 20;
   const float mountFreq = 0.03;
   const float avgTemp = 7.0;
 
-  vec4 lightPosition = {0.0, 0.0, 0.0, 1.0};
   vec3 surfaceColor = {0.0, 0.4, 0.1};
   vec3 snowColor = {0.8, 0.9, 1.0};
   vec3 sandColor = {0.95, 0.67, 0.26};
 
   mat3 planetNormalMatrix = InverseTranspose(planetRotPos);
 
+  glUseProgram(planetShaderId);
+  glUniform1f(glGetUniformLocation(planetShaderId, "amplitude"), mountAmp);
+  glUniform1f(glGetUniformLocation(planetShaderId, "frequency"), mountFreq);
+  glUniform1f(glGetUniformLocation(planetShaderId, "avgTemp"), avgTemp);
+  glUniform3f(glGetUniformLocation(planetShaderId, "lightPosition"), p_light.x, p_light.y, p_light.z);
+  glUniform3f(glGetUniformLocation(planetShaderId, "surfaceColor"), surfaceColor.x, surfaceColor.y, surfaceColor.z);
+  glUniform3f(glGetUniformLocation(planetShaderId, "snowColor"), snowColor.x, snowColor.y, snowColor.z);
+  glUniform3f(glGetUniformLocation(planetShaderId, "sandColor"), sandColor.x, sandColor.y, sandColor.z);
+  glUniformMatrix4fv(glGetUniformLocation(planetShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+  glUniformMatrix4fv(glGetUniformLocation(planetShaderId, "viewMatrix"), 1, GL_TRUE, viewMatrix.m);
+  glUniformMatrix3fv(glGetUniformLocation(planetShaderId, "normalMatrix"), 1, GL_TRUE, planetNormalMatrix.m);
+  glUniformMatrix4fv(glGetUniformLocation(planetShaderId, "modelViewMatrix"), 1, GL_TRUE, planetRotPos.m);
 
-  /*
-   *  Testing sending data to gs with VAO
-   */
+  // Ocean
+  vec3 oceanColor = {0, 11 / 255, 255 / 255};
 
-  vec3 tempColor = {1.0, 0.0, 0.0};
-  //Soon-to-be vertex data that will be passed to shaders
-  data[0] = tempColor.x;
-  data[1] = tempColor.y;
-  data[2] = tempColor.z;
+  glUseProgram(oceanShaderId);
+  glUniform1f(glGetUniformLocation(oceanShaderId, "time"), time);
+  glUniform3f(glGetUniformLocation(oceanShaderId, "lightPosition"), p_light.x, p_light.y, p_light.z);
+  glUniform1f(glGetUniformLocation(oceanShaderId, "avgTemp"), avgTemp);
+  glUniform3f(glGetUniformLocation(oceanShaderId, "oceanColor"), oceanColor.x, oceanColor.y, oceanColor.z);
+  glUniformMatrix4fv(glGetUniformLocation(oceanShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+  glUniformMatrix4fv(glGetUniformLocation(oceanShaderId, "modelViewMatrix"), 1, GL_TRUE, planetOcean.m);
+  DrawModel(sphere, oceanShaderId, "inPosition", "inNormal", NULL);
+}
 
-  //Create VAO
-  GLuint vao = 0;
-  glGenVertexArrays(1, &vao);
-  glBindVertexArray(vao);
-  glBindBuffer(GL_ARRAY_BUFFER, data);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL); //(locationId, size, type, normalizedBool, .., ..)
+void renderScene(void)
+{
+  printError("Render Scene");
 
-  //Enable VAO
-  glEnableVertexAttribArray(0); //Same locationID as the VAO-pointer above
+  updatePositions();
 
-  //Create VBO
-//  GLuint a_vbo = 0;
-//  glGenBuffers(1, &a_vbo);
-//  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, a_vbo);
-//  glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * sizeof(float), &data, GL_STATIC_DRAW );
+  // 1. Render scene to FBO
+
+  useFBO(fbo, NULL, NULL);
+  glViewport(0, 0, RENDER_WIDTH, RENDER_HEIGHT);
+  glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_TRUE); // Depth only
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  //Using the simple shader
+  glUseProgram(projTexShaderId);
+  glUniform1i(projTexMapUniform, 0);
+  glActiveTexture(GL_TEXTURE0 + 0);
+  glBindTexture(GL_TEXTURE_2D, 0);
+
+  drawObjects(planetShaderId);
+
+  //2. Render from camera.
+  // Now rendering from the camera POV
+
+  useFBO(NULL, fbo, NULL);
+
+  glViewport(0, 0, RENDER_WIDTH, RENDER_HEIGHT);
+
+  //Enabling color write (previously disabled for light POV z-buffer rendering)
+  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+
+  // Clear previous frame values
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  //Using the projTex shader
+  glUseProgram(projTexShaderId);
+  glUniform1i(projTexMapUniform, 0);
+  glActiveTexture(GL_TEXTURE0 + 0);
+  glBindTexture(GL_TEXTURE_2D, fbo->depth);
+
+  // Setup the modelview from the camera
+  sunPos = lookAt(p_camera.x, p_camera.y, p_camera.z,
+                  l_camera.x, l_camera.y, l_camera.z, 0, 1, 0);
+
+  glCullFace(GL_BACK);
+  drawObjects(projTexShaderId);
+
+  glutSwapBuffers();
+
+//  // clear the screen
+//  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//
+//
+//
+//  time = glutGet(GLUT_ELAPSED_TIME);
+//
+//  deltaTime = time - startTime;
+//  startTime = time;
+
+//  frame++;
+//
+//    // Print FPS
+//    if (time - timebase > 1000) {
+//        printf("FPS: %4.2f\n", frame * 1000.0 / (time - timebase));
+//        timebase = time;
+//        frame = 0;
+//    }
 
 
 
 
-  glUseProgram(planetShader);
-  glUniform1f(glGetUniformLocation(planetShader, "amplitude"), mountAmp);
-  glUniform1f(glGetUniformLocation(planetShader, "frequency"), mountFreq);
-  glUniform1f(glGetUniformLocation(planetShader, "avgTemp"), avgTemp);
-  glUniform4f(glGetUniformLocation(planetShader, "lightPosition"), lightPosition.x, lightPosition.y, lightPosition.z,
-              lightPosition.w);
-  glUniform3f(glGetUniformLocation(planetShader, "surfaceColor"), surfaceColor.x, surfaceColor.y, surfaceColor.z);
-  glUniform3f(glGetUniformLocation(planetShader, "snowColor"), snowColor.x, snowColor.y, snowColor.z);
-  glUniform3f(glGetUniformLocation(planetShader, "sandColor"), sandColor.x, sandColor.y, sandColor.z);
-  glUniformMatrix4fv(glGetUniformLocation(planetShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
-  glUniformMatrix4fv(glGetUniformLocation(planetShader, "viewMatrix"), 1, GL_TRUE, viewMatrix.m);
-  glUniformMatrix3fv(glGetUniformLocation(planetShader, "normalMatrix"), 1, GL_TRUE, planetNormalMatrix.m);
-  glUniformMatrix4fv(glGetUniformLocation(planetShader, "modelViewMatrix"), 1, GL_TRUE, planetRotPos.m);
-  glUniform1fv(glGetUniformLocation(planetShader, "vertices"), nVertices, vertices);
-
-
-//  DrawModel(sphere, planetShader, "inPosition", "inNormal", NULL);
+//  DrawModel(sphere, planetShaderId, "inPosition", "inNormal", NULL);
 
   /*
    * Stencil testing
@@ -315,39 +274,26 @@ void display(void)
   // Clear the screen to white
 //  glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 
-  glEnable(GL_DEPTH_TEST);
-  glEnable(GL_STENCIL_TEST);
+//  glEnable(GL_DEPTH_TEST);
+//  glEnable(GL_STENCIL_TEST);
+//
+//  glStencilFunc(GL_ALWAYS, 0, 0xFF); // init to 0, camera is not in shadowed area
+//
+//  //Increment stencil when entering object
+//  glCullFace(GL_FRONT);
+//  glStencilOp(GL_KEEP, GL_INCR, GL_KEEP);
+//
+//  //Decrement stencil when exiting object
+//  glCullFace(GL_BACK);
+//  glStencilOp(GL_KEEP, GL_DECR, GL_KEEP);
+//
+//  DrawModel(sphere, planetShaderId, "inPosition", "inNormal", NULL);
+//
+//  glDisable(GL_STENCIL_TEST);
 
-  glStencilFunc(GL_ALWAYS, 0, 0xFF); // init to 0, camera is not in shadowed area
-
-  //Increment stencil when entering object
-  glCullFace(GL_FRONT);
-  glStencilOp(GL_KEEP, GL_INCR, GL_KEEP);
-
-  //Decrement stencil when exiting object
-  glCullFace(GL_BACK);
-  glStencilOp(GL_KEEP, GL_DECR, GL_KEEP);
-
-  DrawModel(sphere, planetShader, "inPosition", "inNormal", NULL);
-
-  glDisable(GL_STENCIL_TEST);
-
-  // Ocean
-  vec3 oceanColor = {0, 11 / 255, 255 / 255};
-
-  glUseProgram(oceanShader);
-  glUniform1f(glGetUniformLocation(oceanShader, "time"), time);
-  glUniform4f(glGetUniformLocation(oceanShader, "lightPosition"), lightPosition.x, lightPosition.y, lightPosition.z,
-              lightPosition.w);
-  glUniform1f(glGetUniformLocation(oceanShader, "avgTemp"), avgTemp);
-  glUniform3f(glGetUniformLocation(oceanShader, "oceanColor"), oceanColor.x, oceanColor.y, oceanColor.z);
-  glUniformMatrix4fv(glGetUniformLocation(oceanShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
-  glUniformMatrix4fv(glGetUniformLocation(oceanShader, "modelViewMatrix"), 1, GL_TRUE, planetOcean.m);
-  DrawModel(sphere, oceanShader, "inPosition", "inNormal", NULL);
-
-  printError("display");
-
-  glutSwapBuffers();
+//  printError("display");
+//
+//  glutSwapBuffers();
 }
 
 void reshape(GLsizei w, GLsizei h)
@@ -363,11 +309,19 @@ int main(int argc, char *argv[])
   glutInit(&argc, argv);
 
   glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE | GLUT_STENCIL);
-  glutInitWindowSize(W, H);
-
+  glutInitWindowSize(RENDER_WIDTH, RENDER_HEIGHT);
   glutInitContextVersion(3, 2);
   glutCreateWindow("TSBK03 Project");
-  glutDisplayFunc(display);
+
+  loadShadowShaders();
+
+  fbo = initFBO2(RENDER_WIDTH, RENDER_HEIGHT, 0, 1);
+
+  glEnable(GL_DEPTH_TEST);
+  glClearColor(0, 0, 0, 1.0f);
+  glEnable(GL_CULL_FACE);
+
+  glutDisplayFunc(renderScene);
   glutReshapeFunc(reshape);
 
   init();

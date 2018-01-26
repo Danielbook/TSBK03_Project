@@ -8,9 +8,6 @@ uniform mat4 modelViewMatrix;
 uniform mat3 normalMatrix;
 uniform mat4 projectionMatrix;
 
-//VAO
-layout (location = 0) in vec3 vao_color;
-
 out vec3 vNormal;
 out vec3 vPosition;
 out float noise;

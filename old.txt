@@ -1,0 +1,312 @@
+//  int trianglesSize = sphere->numIndices / 3;
+//  triangles = malloc(sizeof(triangleArray) * trianglesSize);
+//
+//
+//  printf("Number of indices: %i\n", sphere->numIndices);
+//  printf("Number of vertices: %i\n", sphere->numVertices);
+//
+//  int k = 0;
+//  for (int i = 0; i < sphere->numIndices; i+=3) {
+//    if(i > 0 && (i % 3) == 0) {
+//      k++;
+//    }
+//    triangles[k].triangleIndex[0] = sphere->indexArray[i];
+//    triangles[k].triangleIndex[1] = sphere->indexArray[i + 1];
+//    triangles[k].triangleIndex[2] = sphere->indexArray[i + 2];
+//
+//    printf("Triangle: %i: ", k);
+//    printf("(%i, ", triangles[k].triangleIndex[0]);
+//    printf("%i, ", triangles[k].triangleIndex[1]);
+//    printf("%i)\n", triangles[k].triangleIndex[2]);
+//  }
+//
+//  int f = 0;
+//  for (int i = 0; i < sphere->numVertices; i += 9) {
+//    triangles[f].vertex[0].x = sphere->vertexArray[i];
+//    triangles[f].vertex[0].y = sphere->vertexArray[i+1];
+//    triangles[f].vertex[0].z = sphere->vertexArray[i+2];
+//
+//    triangles[f].vertex[1].x = sphere->vertexArray[i+3];
+//    triangles[f].vertex[1].y = sphere->vertexArray[i+4];
+//    triangles[f].vertex[1].z = sphere->vertexArray[i+5];
+//
+//    triangles[f].vertex[2].x = sphere->vertexArray[i+6];
+//    triangles[f].vertex[2].y = sphere->vertexArray[i+7];
+//    triangles[f].vertex[2].z = sphere->vertexArray[i+8];
+//
+//    printf("Triangle %i: ", f);
+//    printf("(%f, ", triangles[f].vertex[0].x);
+//    printf("%f, ", triangles[f].vertex[0].y);
+//    printf("%f), ", triangles[f].vertex[0].z);
+//    printf("(%f, ", triangles[f].vertex[1].x);
+//    printf("%f, ", triangles[f].vertex[1].y);
+//    printf("%f), ", triangles[f].vertex[1].z);
+//    printf("(%f, ", triangles[f].vertex[2].x);
+//    printf("%f, ", triangles[f].vertex[2].y);
+//    printf("%f)\n", triangles[f].vertex[2].z);
+//    f++;
+//  }
+
+//  int f = 0;
+//  for (int i = 0; i < trianglesSize; i += 9) {
+//    triangles[f].vertex[0].x = sphere->vertexArray[triangles[f].triangleIndex[0]];
+//    triangles[f].vertex[0].y = sphere->vertexArray[triangles[f].triangleIndex[0]];
+//    triangles[f].vertex[0].z = sphere->vertexArray[triangles[f].triangleIndex[0]];
+//
+//    triangles[f].vertex[1].x = sphere->vertexArray[triangles[f].triangleIndex[0]];
+//    triangles[f].vertex[1].y = sphere->vertexArray[triangles[f].triangleIndex[0]];
+//    triangles[f].vertex[1].z = sphere->vertexArray[triangles[f].triangleIndex[0]];
+//
+//    triangles[f].vertex[2].x = sphere->vertexArray[triangles[f].triangleIndex[0]];
+//    triangles[f].vertex[2].y = sphere->vertexArray[triangles[f].triangleIndex[0]];
+//    triangles[f].vertex[2].z = sphere->vertexArray[triangles[f].triangleIndex[0]];
+//
+//    printf("Triangle %i: ", f);
+//    printf("(%f, ", triangles[f].vertex[0].x);
+//    printf("%f, ", triangles[f].vertex[0].y);
+//    printf("%f), ", triangles[f].vertex[0].z);
+//    printf("(%f, ", triangles[f].vertex[1].x);
+//    printf("%f, ", triangles[f].vertex[1].y);
+//    printf("%f), ", triangles[f].vertex[1].z);
+//    printf("(%f, ", triangles[f].vertex[2].x);
+//    printf("%f, ", triangles[f].vertex[2].y);
+//    printf("%f)\n", triangles[f].vertex[2].z);
+//    f++;
+//  }
+//
+//  printf("\n");
+//
+//  for (int i = 0; i < trianglesSize; i++) {
+//    for (int j = 0; j < trianglesSize; j++) {
+//      if (i != j) {
+//        // Edge 1
+//        if (/*triangles[i].triangleIndex[0] == triangles[j].triangleIndex[0] && triangles[i].triangleIndex[1] == triangles[j].triangleIndex[1] ||*/
+//                triangles[i].triangleIndex[0] == triangles[j].triangleIndex[1] && triangles[i].triangleIndex[1] == triangles[j].triangleIndex[2] ||
+//                triangles[i].triangleIndex[0] == triangles[j].triangleIndex[2] && triangles[i].triangleIndex[1] == triangles[j].triangleIndex[0]) {
+//
+//          printf("Case 1!\n");
+//          printf("Triangle %i: ", i);
+//          printf("{%i, ", triangles[i].triangleIndex[0]);
+//          printf("%i, ", triangles[i].triangleIndex[1]);
+//          printf("%i}\n", triangles[i].triangleIndex[2]);
+//          printf("and \n");
+//          printf("triangleIndex %i: ", j);
+//          printf("{%i, ", triangles[j].triangleIndex[0]);
+//          printf("%i, ", triangles[j].triangleIndex[1]);
+//          printf("%i}\n", triangles[j].triangleIndex[2]);
+//
+//          printf("Unique index 1: %i", triangles[j].triangleIndex[0]);
+//          printf("\n\n");
+//        }
+//        // Edge 2
+//        if (/*triangles[i].triangleIndex[1] == triangles[j].triangleIndex[1] && triangles[i].triangleIndex[2] == triangles[j].triangleIndex[2] ||*/
+//                triangles[i].triangleIndex[1] == triangles[j].triangleIndex[2] && triangles[i].triangleIndex[2] == triangles[j].triangleIndex[0] ||
+//                triangles[i].triangleIndex[1] == triangles[j].triangleIndex[0] && triangles[i].triangleIndex[2] == triangles[j].triangleIndex[1]) {
+//
+//          printf("Case 2!\n");
+//          printf("Triangle %i: ", i);
+//          printf("{%i, ", triangles[i].triangleIndex[0]);
+//          printf("%i, ", triangles[i].triangleIndex[1]);
+//          printf("%i}\n", triangles[i].triangleIndex[2]);
+//          printf("and \n");
+//          printf("triangleIndex %i: ", j);
+//          printf("{%i, ", triangles[j].triangleIndex[0]);
+//          printf("%i, ", triangles[j].triangleIndex[1]);
+//          printf("%i}\n", triangles[j].triangleIndex[2]);
+//
+//          printf("Unique index 2: %i", triangles[j].triangleIndex[1]);
+//          printf("\n\n");
+//        }
+//        // Edge 3
+//        if (/*triangles[i].triangleIndex[2] == triangles[j].triangleIndex[2] && triangles[i].triangleIndex[0] == triangles[j].triangleIndex[0] ||*/
+//                triangles[i].triangleIndex[2] == triangles[j].triangleIndex[1] && triangles[i].triangleIndex[0] == triangles[j].triangleIndex[2] ||
+//                triangles[i].triangleIndex[2] == triangles[j].triangleIndex[0] && triangles[i].triangleIndex[0] == triangles[j].triangleIndex[1]) {
+//
+//          printf("Case 3!\n");
+//          printf("Triangle %i: ", i);
+//          printf("{%i, ", triangles[i].triangleIndex[0]);
+//          printf("%i, ", triangles[i].triangleIndex[1]);
+//          printf("%i}\n", triangles[i].triangleIndex[2]);
+//          printf("and \n");
+//          printf("triangleIndex %i: ", j);
+//          printf("{%i, ", triangles[j].triangleIndex[0]);
+//          printf("%i, ", triangles[j].triangleIndex[1]);
+//          printf("%i}\n", triangles[j].triangleIndex[2]);
+//
+//          printf("Unique index 3: %i", triangles[j].triangleIndex[2]);
+//          printf("\n\n");
+//        }
+//      }
+//    }
+//  }
+//
+//  for (int i = 0; i < trianglesSize; i++) {
+//    for (int j = 0; j < trianglesSize; j++) {
+//      if (i != j) {
+//        // Edge 1
+//        if ((triangles[i].triangleIndex[1] == triangles[j].triangleIndex[0] ||
+//             triangles[i].triangleIndex[1] == triangles[j].triangleIndex[1] ||
+//             triangles[i].triangleIndex[1] == triangles[j].triangleIndex[2] )
+//            &&
+//            (triangles[i].triangleIndex[2] == triangles[j].triangleIndex[0] ||
+//             triangles[i].triangleIndex[2] == triangles[j].triangleIndex[1] ||
+//             triangles[i].triangleIndex[2] == triangles[j].triangleIndex[2]))  {
+//
+//          bool zero = true, one = true, two = true;
+//
+//
+//          // NOT SLOT 0
+//          if(triangles[i].triangleIndex[1] == triangles[j].triangleIndex[0] ||
+//             triangles[i].triangleIndex[2] == triangles[j].triangleIndex[0]) {
+//            zero = false;
+//          }
+//
+//          // NOT SLOT 1
+//          if(triangles[i].triangleIndex[1] == triangles[j].triangleIndex[1] ||
+//             triangles[i].triangleIndex[2] == triangles[j].triangleIndex[1]) {
+//            one = false;
+//          }
+//
+//          // NOT SLOT 2
+//          if(triangles[i].triangleIndex[1] == triangles[j].triangleIndex[2] ||
+//             triangles[i].triangleIndex[2] == triangles[j].triangleIndex[2]) {
+//            two = false;
+//          }
+//
+//          if(one && two) {
+//            printf("Unique: %i", triangles[j].triangleIndex[0]);
+//
+//          }
+//          if(zero && two) {
+//            printf("Unique: %i", triangles[j].triangleIndex[1]);
+//          }
+//          if(zero && one) {
+//            printf("Unique: %i", triangles[j].triangleIndex[2]);
+//          }
+//
+//          printf("Case 1!\n");
+//          printf("Triangle %i: ", i);
+//          printf("{%i, ", triangles[i].triangleIndex[0]);
+//          printf("%i, ", triangles[i].triangleIndex[1]);
+//          printf("%i}\n", triangles[i].triangleIndex[2]);
+//          printf("and \n");
+//          printf("triangleIndex %i: ", j);
+//          printf("{%i, ", triangles[j].triangleIndex[0]);
+//          printf("%i, ", triangles[j].triangleIndex[1]);
+//          printf("%i}\n", triangles[j].triangleIndex[2]);
+//
+//          printf("Unique index 1: %i", triangles[j].triangleIndex[1]);
+//          printf("\n\n");
+//        }
+//
+//        // Edge 2
+//        if ((triangles[i].triangleIndex[0] == triangles[j].triangleIndex[0] ||
+//             triangles[i].triangleIndex[0] == triangles[j].triangleIndex[1] ||
+//             triangles[i].triangleIndex[0] == triangles[j].triangleIndex[2] )
+//            &&
+//            (triangles[i].triangleIndex[1] == triangles[j].triangleIndex[0] ||
+//             triangles[i].triangleIndex[1] == triangles[j].triangleIndex[1] ||
+//             triangles[i].triangleIndex[1] == triangles[j].triangleIndex[2])) {
+//
+//          bool zero = true, one = true, two = true;
+//
+//          // NOT SLOT 0
+//          if(triangles[i].triangleIndex[0] == triangles[j].triangleIndex[0] ||
+//             triangles[i].triangleIndex[1] == triangles[j].triangleIndex[0]) {
+//            zero = false;
+//          }
+//
+//          // NOT SLOT 1
+//          if(triangles[i].triangleIndex[0] == triangles[j].triangleIndex[1] ||
+//             triangles[i].triangleIndex[1] == triangles[j].triangleIndex[1]) {
+//            one = false;
+//          }
+//
+//          // NOT SLOT 2
+//          if(triangles[i].triangleIndex[0] == triangles[j].triangleIndex[2] ||
+//             triangles[i].triangleIndex[1] == triangles[j].triangleIndex[2]) {
+//            two = false;
+//          }
+//
+//
+//          if(one && two) {
+//            printf("Unique: %i", triangles[j].triangleIndex[0]);
+//          }
+//          if(zero && two) {
+//            printf("Unique: %i", triangles[j].triangleIndex[1]);
+//          }
+//          if(zero && one) {
+//            printf("Unique: %i", triangles[j].triangleIndex[2]);
+//          }
+//
+//          printf("Case 2!\n");
+//          printf("Triangle %i: ", i);
+//          printf("{%i, ", triangles[i].triangleIndex[0]);
+//          printf("%i, ", triangles[i].triangleIndex[1]);
+//          printf("%i}\n", triangles[i].triangleIndex[2]);
+//          printf("and \n");
+//          printf("triangleIndex %i: ", j);
+//          printf("{%i, ", triangles[j].triangleIndex[0]);
+//          printf("%i, ", triangles[j].triangleIndex[1]);
+//          printf("%i}\n", triangles[j].triangleIndex[2]);
+//
+//          printf("Unique index 2: %i", triangles[j].triangleIndex[1]);
+//          printf("\n\n");
+//        }
+//
+//        // Edge 3
+//        if ((triangles[i].triangleIndex[0] == triangles[j].triangleIndex[0] ||
+//             triangles[i].triangleIndex[0] == triangles[j].triangleIndex[1] ||
+//             triangles[i].triangleIndex[0] == triangles[j].triangleIndex[2] )
+//            &&
+//            (triangles[i].triangleIndex[2] == triangles[j].triangleIndex[0] ||
+//             triangles[i].triangleIndex[2] == triangles[j].triangleIndex[1] ||
+//             triangles[i].triangleIndex[2] == triangles[j].triangleIndex[2])) {
+//
+//          bool zero = true, one = true, two = true;
+//
+//          // NOT SLOT 0
+//          if(triangles[i].triangleIndex[0] == triangles[j].triangleIndex[0] ||
+//             triangles[i].triangleIndex[2] == triangles[j].triangleIndex[0]) {
+//            zero = false;
+//          }
+//
+//          // NOT SLOT 1
+//          if(triangles[i].triangleIndex[0] == triangles[j].triangleIndex[1] ||
+//             triangles[i].triangleIndex[2] == triangles[j].triangleIndex[1]) {
+//            one = false;
+//          }
+//
+//          // NOT SLOT 2
+//          if(triangles[i].triangleIndex[0] == triangles[j].triangleIndex[2] ||
+//             triangles[i].triangleIndex[2] == triangles[j].triangleIndex[2]) {
+//            two = false;
+//          }
+//
+//          if(one && two) {
+//            printf("Unique: %i", triangles[j].triangleIndex[0]);
+//          }
+//          if(zero && two) {
+//            printf("Unique: %i", triangles[j].triangleIndex[1]);
+//          }
+//          if(zero && one) {
+//            printf("Unique: %i", triangles[j].triangleIndex[2]);
+//          }
+//
+//          printf("Case 3!\n");
+//          printf("Triangle %i: ", i);
+//          printf("{%i, ", triangles[i].triangleIndex[0]);
+//          printf("%i, ", triangles[i].triangleIndex[1]);
+//          printf("%i}\n", triangles[i].triangleIndex[2]);
+//          printf("and \n");
+//          printf("triangleIndex %i: ", j);
+//          printf("{%i, ", triangles[j].triangleIndex[0]);
+//          printf("%i, ", triangles[j].triangleIndex[1]);
+//          printf("%i}\n", triangles[j].triangleIndex[2]);
+//
+//          printf("Unique index 3: %i", triangles[j].triangleIndex[2]);
+//          printf("\n\n");
+//        }
+//      }
+//    }
+//  }
