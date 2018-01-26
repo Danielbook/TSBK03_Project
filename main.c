@@ -104,7 +104,7 @@ void init(void)
   dumpInfo();
 
   // GL inits
-  glClearColor(0.0, 0.0, 0.0, 0);
+  glClearColor(1.0, 1.0, 1.0, 0);
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_CULL_FACE);
   projectionMatrix = frustum(-1, 1, -1, 1, 1.0, 1000.0);
@@ -165,6 +165,8 @@ void drawObjects(GLuint shader)
   glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
   glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "modelViewMatrix"), 1, GL_TRUE, sunPos.m);
   glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "normalMatrix"), 1, GL_TRUE, sunNormalMatrix.m);
+//  glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "textureMatrix"), 1, GL_TRUE, textureMatrix.m);
+
 
   DrawModel(sphere, sunShaderId, "inPosition", "inNormal", NULL);
 
@@ -191,6 +193,7 @@ void drawObjects(GLuint shader)
   glUniformMatrix4fv(glGetUniformLocation(planetShaderId, "viewMatrix"), 1, GL_TRUE, viewMatrix.m);
   glUniformMatrix3fv(glGetUniformLocation(planetShaderId, "normalMatrix"), 1, GL_TRUE, planetNormalMatrix.m);
   glUniformMatrix4fv(glGetUniformLocation(planetShaderId, "modelViewMatrix"), 1, GL_TRUE, planetRotPos.m);
+  glUniformMatrix4fv(glGetUniformLocation(planetShaderId, "textureMatrix"), 1, GL_TRUE, textureMatrix.m);
 
   DrawModel(sphere, planetShaderId, "inPosition", "inNormal", NULL);
 
@@ -204,6 +207,8 @@ void drawObjects(GLuint shader)
   glUniform3f(glGetUniformLocation(oceanShaderId, "oceanColor"), oceanColor.x, oceanColor.y, oceanColor.z);
   glUniformMatrix4fv(glGetUniformLocation(oceanShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
   glUniformMatrix4fv(glGetUniformLocation(oceanShaderId, "modelViewMatrix"), 1, GL_TRUE, planetOcean.m);
+  glUniformMatrix4fv(glGetUniformLocation(oceanShaderId, "textureMatrix"), 1, GL_TRUE, textureMatrix.m);
+
   DrawModel(sphere, oceanShaderId, "inPosition", "inNormal", NULL);
 
   // Moon
@@ -220,6 +225,8 @@ void drawObjects(GLuint shader)
   glUniform3f(glGetUniformLocation(moonShaderId, "moonColor"), moonColor.x, moonColor.y, moonColor.z);
   glUniformMatrix4fv(glGetUniformLocation(moonShaderId, "modelViewMatrix"), 1, GL_TRUE, moonPos.m);
   glUniformMatrix4fv(glGetUniformLocation(moonShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+  glUniformMatrix4fv(glGetUniformLocation(moonShaderId, "textureMatrix"), 1, GL_TRUE, textureMatrix.m);
+
   DrawModel(sphere, moonShaderId, "inPosition", "inNormal", NULL);
 }
 
@@ -240,7 +247,7 @@ void renderScene(void)
 {
   printError("Render Scene");
 
-//  updatePositions();
+  updatePositions();
 
   viewMatrix = lookAt(p_light.x, p_light.y, p_light.z,
                       l_light.x, l_light.y, l_light.z,
