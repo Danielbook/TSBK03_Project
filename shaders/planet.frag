@@ -132,7 +132,7 @@ void main() {
   ambient = ka * finalColor;
   diffuse = kd * finalColor * max(0.0, dot(normalize(vNormal), lightVector));
 
-  finalColor = diffuse+ambient;
+  finalColor = diffuse;
 
   outColor = vec4(finalColor, 1.0);
 }
