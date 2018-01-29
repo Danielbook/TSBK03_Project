@@ -24,7 +24,7 @@
 
 // Projection matrix, set by a call to perspective().
 mat4 projectionMatrix;
-mat4 viewMatrix, textureMatrix;
+mat4 viewMatrix, textureMatrix, modelViewMatrix;
 
 Point3D cam, point;
 
@@ -41,17 +41,16 @@ FBOstruct *fbo;
 float light_mvnt = 40.0f; // At 30 we get edge artifacts
 
 //Light position
-Point3D p_light = {40,20,0};
+Point3D p_light = {40, 20, 0};
 
 //Light lookAt
-Point3D l_light = {0,3,-10};
+Point3D l_light = {0, 3, -10};
 
 //Camera position
 Point3D p_camera = {0, 300, 100};
 
 //Camera lookAt
 Point3D l_camera = {0, 1, 0};
-
 
 // * Texture(s)
 GLuint texture;
@@ -60,20 +59,7 @@ GLuint data[3];
 
 GLfloat a;
 
-
 int frame = 0, time, timebase = 0, deltaTime = 0, startTime = 0, nVertices = 0;
-
-typedef struct
-{
-    int triangle[3];
-} triangleArray;
-
-typedef struct
-{
-    float vertex[3];
-} vertexArray;
-
-float vertArray;
 
 // This function is called whenever the computer is idle
 // As soon as the machine is idle, ask GLUT to trigger rendering of a new frame
@@ -82,7 +68,6 @@ void onTimer(int value)
   glutPostRedisplay();
   glutTimerFunc(5, &onTimer, value);
 }
-
 
 void loadShadowShaders()
 {
@@ -99,19 +84,40 @@ void loadShadowShaders()
   printError("init shader");
 }
 
+GLfloat groundcolor[] = {0.3f, 0.3f, 0.3f, 1};
+GLfloat ground[] = {
+        -350, 0, -350,
+        -350, 0, 350,
+        350, 0, 350,
+        350, 0, -350
+};
+GLuint groundIndices[] = {0, 1, 2, 0, 2, 3};
+
+Model *groundModel;
+
 void init(void)
 {
   dumpInfo();
 
+  // The shader must be loaded before this is called!
+  if (projTexShaderId == 0)
+    printf("Warning! Is the shader not loaded?\n");
+
   // GL inits
-  glClearColor(1.0, 1.0, 1.0, 0);
-  glEnable(GL_DEPTH_TEST);
-  glEnable(GL_CULL_FACE);
-  projectionMatrix = frustum(-1, 1, -1, 1, 1.0, 1000.0);
+  projectionMatrix = perspective(90, RENDER_WIDTH / RENDER_HEIGHT, 10, 4000);
   printError("GL inits");
 
   // Upload geometry to the GPU:
   sphere = LoadModelPlus("../assets/newSphere.obj"); // Sphere
+
+  groundModel = LoadDataToModel(
+          ground,
+          NULL,
+          NULL,
+          NULL,
+          groundIndices,
+          4,
+          6);
 
   printError("load models");
 
@@ -123,16 +129,17 @@ void init(void)
   zprInit(&viewMatrix, cam, point);
 }
 
-void updatePositions() {
-  p_light.x = light_mvnt * cos(glutGet(GLUT_ELAPSED_TIME)/1000.0);
-  p_light.z = light_mvnt * sin(glutGet(GLUT_ELAPSED_TIME)/1000.0);
+void updatePositions()
+{
+  p_light.x = light_mvnt * cos(glutGet(GLUT_ELAPSED_TIME) / 1000.0);
+  p_light.z = light_mvnt * sin(glutGet(GLUT_ELAPSED_TIME) / 1000.0);
 }
 
 mat4 sunPos;
 
 void drawObjects(GLuint shader)
 {
-  mat4 planetPos, planetRotPos, planetOcean, moonPos;
+  mat4 planetPos, planetRotPos, planetOcean, moonPos, moonRotPos;
 
   time = glutGet(GLUT_ELAPSED_TIME);
 
@@ -140,10 +147,13 @@ void drawObjects(GLuint shader)
   startTime = time;
 
   sunPos = Mult(viewMatrix, T(0, 0, 0));
+
   planetPos = Mult(sunPos, Mult(Ry(0), T(200, 0, 0))); // Planet position
-  planetRotPos = Mult(planetPos, Mult(Ry(0.005*time), S(0.4, 0.4, 0.4))); // Planet pos + rotation
+  planetRotPos = Mult(planetPos, Mult(Ry(0), S(0.4, 0.4, 0.4))); // Planet pos + rotation
   planetOcean = Mult(planetRotPos, S(0.97, 0.97, 0.97)); // Planet pos + rotation
-  moonPos = Mult(planetPos,Mult(Ry(0), T(200, 0, 0))); // Moon rotation
+
+  moonPos = Mult(planetPos, Mult(Ry(0), T(50, 0, 0))); // Moon rotation
+  moonRotPos = Mult(moonPos, Mult(Ry(0), S(0.4, 0.4, 0.4))); // Planet pos + rotation
 
   // Enable Z-buffering
   glEnable(GL_DEPTH_TEST);
@@ -151,7 +161,17 @@ void drawObjects(GLuint shader)
   glEnable(GL_CULL_FACE);
   glCullFace(GL_BACK);
 
+  glUniformMatrix4fv(glGetUniformLocation(projTexShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
 
+  mat4 planePos = Mult(viewMatrix, Mult(Rz(0.5), T(200, -200, 0)));
+
+  // Ground
+  glUniform1f(glGetUniformLocation(projTexShaderId, "shade"), 0.3); // Dark ground
+  glUniformMatrix4fv(glGetUniformLocation(projTexShaderId, "modelViewMatrix"), 1, GL_TRUE, planePos.m);
+  glUniformMatrix4fv(glGetUniformLocation(projTexShaderId, "textureMatrix"), 1, GL_TRUE, textureMatrix.m);
+  DrawModel(groundModel, projTexShaderId, "in_Position", NULL, NULL);
+
+  glUniform1f(glGetUniformLocation(projTexShaderId, "shade"), 0.9); // Brighter objects
 
   // SUN
   const float sunAmp = 0.1;
@@ -214,7 +234,7 @@ void drawObjects(GLuint shader)
   // Moon
   vec3 moonColor = {0, 11 / 255, 11 / 255};
   const float moonMountFreq = 0.01;
-  const float moonMountAmp = 0.1;
+  const float moonMountAmp = 0.5;
 
   glUseProgram(moonShaderId);
   glUniform1f(glGetUniformLocation(moonShaderId, "time"), time);
@@ -223,7 +243,7 @@ void drawObjects(GLuint shader)
   glUniform3f(glGetUniformLocation(moonShaderId, "lightPosition"), p_light.x, p_light.y, p_light.z);
   glUniform1f(glGetUniformLocation(moonShaderId, "avgTemp"), avgTemp);
   glUniform3f(glGetUniformLocation(moonShaderId, "moonColor"), moonColor.x, moonColor.y, moonColor.z);
-  glUniformMatrix4fv(glGetUniformLocation(moonShaderId, "modelViewMatrix"), 1, GL_TRUE, moonPos.m);
+  glUniformMatrix4fv(glGetUniformLocation(moonShaderId, "modelViewMatrix"), 1, GL_TRUE, moonRotPos.m);
   glUniformMatrix4fv(glGetUniformLocation(moonShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
   glUniformMatrix4fv(glGetUniformLocation(moonShaderId, "textureMatrix"), 1, GL_TRUE, textureMatrix.m);
 
@@ -249,15 +269,15 @@ void renderScene(void)
 
   updatePositions();
 
+//  projectionMatrix = perspective(45, RENDER_WIDTH/RENDER_HEIGHT, 10, 4000);
+
+  // Setup the modelview from the light source
   viewMatrix = lookAt(p_light.x, p_light.y, p_light.z,
-                      l_light.x, l_light.y, l_light.z,
-                      0,1,0);
+                      l_light.x, l_light.y, l_light.z, 0, 1, 0);
 
   setTextureMatrix();
 
-
   // 1. Render scene to FBO
-
   useFBO(fbo, NULL, NULL);
   glViewport(0, 0, RENDER_WIDTH, RENDER_HEIGHT);
   glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_TRUE); // Depth only
@@ -292,8 +312,7 @@ void renderScene(void)
 
   // Setup the modelview from the camera
   viewMatrix = lookAt(p_camera.x, p_camera.y, p_camera.z,
-                      l_camera.x, l_camera.y, l_camera.z,
-                      0, 1, 0);
+                      l_camera.x, l_camera.y, l_camera.z, 0, 1, 0);
 
   updateCameraMatrix(NULL);
 
@@ -301,67 +320,24 @@ void renderScene(void)
   drawObjects(projTexShaderId);
 
   glutSwapBuffers();
-
-//  // clear the screen
-//  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//
-//
-//
-//  time = glutGet(GLUT_ELAPSED_TIME);
-//
-//  deltaTime = time - startTime;
-//  startTime = time;
-
-//  frame++;
-//
-//    // Print FPS
-//    if (time - timebase > 1000) {
-//        printf("FPS: %4.2f\n", frame * 1000.0 / (time - timebase));
-//        timebase = time;
-//        frame = 0;
-//    }
-
-
-
-
-//  DrawModel(sphere, planetShaderId, "inPosition", "inNormal", NULL);
-
-  /*
-   * Stencil testing
-   * http://ogldev.atspace.co.uk/www/tutorial40/tutorial40.html
-  */
-
-  // Clear the screen to white
-//  glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-
-//  glEnable(GL_DEPTH_TEST);
-//  glEnable(GL_STENCIL_TEST);
-//
-//  glStencilFunc(GL_ALWAYS, 0, 0xFF); // init to 0, camera is not in shadowed area
-//
-//  //Increment stencil when entering object
-//  glCullFace(GL_FRONT);
-//  glStencilOp(GL_KEEP, GL_INCR, GL_KEEP);
-//
-//  //Decrement stencil when exiting object
-//  glCullFace(GL_BACK);
-//  glStencilOp(GL_KEEP, GL_DECR, GL_KEEP);
-//
-//  DrawModel(sphere, planetShaderId, "inPosition", "inNormal", NULL);
-//
-//  glDisable(GL_STENCIL_TEST);
-
-//  printError("display");
-//
-//  glutSwapBuffers();
 }
 
 void reshape(GLsizei w, GLsizei h)
 {
   glViewport(0, 0, w, h);
   GLfloat ratio = (GLfloat) w / (GLfloat) h;
-  projectionMatrix = perspective(90, ratio, 1.0, 1000);
+  projectionMatrix = perspective(90, ratio, 1.0, 4000);
+}
 
+void processNormalKeys(unsigned char key, int x, int y)
+{
+  // ESC key will close application
+  if (key == 27)
+    exit(0);
+
+  // Press f and its fullscreen
+  if (key == 102)
+    glutFullScreen();
 }
 
 int main(int argc, char *argv[])
@@ -374,17 +350,18 @@ int main(int argc, char *argv[])
   glutCreateWindow("TSBK03 Project");
 
   loadShadowShaders();
+  init();
 
   fbo = initFBO2(RENDER_WIDTH, RENDER_HEIGHT, 0, 1);
 
   glEnable(GL_DEPTH_TEST);
-  glClearColor(0, 0, 0, 1.0f);
+  glClearColor(1, 1, 1, 1.0f);
   glEnable(GL_CULL_FACE);
 
   glutDisplayFunc(renderScene);
   glutReshapeFunc(reshape);
 
-  init();
+  glutKeyboardFunc(processNormalKeys);
   glutMainLoop();
   exit(0);
 }

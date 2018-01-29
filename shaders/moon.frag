@@ -189,6 +189,7 @@ float pnoise(vec3 P, vec3 rep)
 
 
 void main() {
+  vNormal;
   vec3 darkColor = vec3(0.3, 0.3, 0.3);
   vec3 light = normalize(lightPosition);
 
