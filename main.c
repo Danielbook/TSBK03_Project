@@ -113,7 +113,7 @@ void init(void)
   printError("GL inits");
 
   // Upload geometry to the GPU:
-  sphere = LoadModelPlus("../assets/newSphere.obj"); // Sphere
+  sphere = LoadModelPlus("../assets/bestSphere.obj"); // Sphere
 
   groundModel = LoadDataToModel(
           ground,
@@ -157,19 +157,19 @@ void drawObjects(GLuint shader)
   glEnable(GL_CULL_FACE);
   glCullFace(GL_BACK);
 
-  glUniformMatrix4fv(glGetUniformLocation(projTexShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
-
-  mat4 planeTransform = Mult(Rz(M_PI/2), T(0, -1000, 0));
-  mv2 = Mult(modelViewMatrix, planeTransform);
-  tx2 = Mult(textureMatrix, planeTransform);
-
-  // Ground
-  glUniform1f(glGetUniformLocation(projTexShaderId, "shade"), 0.2); // Dark ground
-  glUniformMatrix4fv(glGetUniformLocation(projTexShaderId, "modelViewMatrix"), 1, GL_TRUE, mv2.m);
-  glUniformMatrix4fv(glGetUniformLocation(projTexShaderId, "textureMatrix"), 1, GL_TRUE, tx2.m);
-  DrawModel(groundModel, projTexShaderId, "inPosition", NULL, NULL);
-
-  glUniform1f(glGetUniformLocation(projTexShaderId, "shade"), 0.9); // Brighter objects
+//  glUniformMatrix4fv(glGetUniformLocation(projTexShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+//
+//  mat4 planeTransform = Mult(Rz(M_PI/2), T(0, -1000, 0));
+//  mv2 = Mult(modelViewMatrix, planeTransform);
+//  tx2 = Mult(textureMatrix, planeTransform);
+//
+//  // Ground
+//  glUniform1f(glGetUniformLocation(projTexShaderId, "shade"), 0.2); // Dark ground
+//  glUniformMatrix4fv(glGetUniformLocation(projTexShaderId, "modelViewMatrix"), 1, GL_TRUE, mv2.m);
+//  glUniformMatrix4fv(glGetUniformLocation(projTexShaderId, "textureMatrix"), 1, GL_TRUE, tx2.m);
+//  DrawModel(groundModel, projTexShaderId, "inPosition", NULL, NULL);
+//
+//  glUniform1f(glGetUniformLocation(projTexShaderId, "shade"), 0.9); // Brighter objects
 
   // SUN
   const float sunAmp = 0.1;
@@ -198,8 +198,8 @@ void drawObjects(GLuint shader)
   vec3 snowColor = {0.8, 0.9, 1.0};
   vec3 sandColor = {0.95, 0.67, 0.26};
 
-//  planetTransl = Mult(Rz(0), T(500, 0, 0)); // Planet translation
-//  planetRot = Mult(Rz(time*0.0008), S(0.8, 0.8, 0.8)); // Planet Rotation
+  planetTransl = Mult(Rz(0), T(500, 0, 0)); // Planet translation
+  planetRot = Mult(Rz(time*0.0008), S(0.8, 0.8, 0.8)); // Planet Rotation
   planetTransform = Mult(Mult(Rz(0), T(500, 0, 0)), Mult(Rz(time*0.0008), S(0.8, 0.8, 0.8)));
 
   mv2 = Mult(modelViewMatrix, planetTransform);
@@ -207,7 +207,7 @@ void drawObjects(GLuint shader)
   mat3 planetNormalMatrix = InverseTranspose(mv2);
 
   glUseProgram(planetShaderId);
-  glUniform1f(glGetUniformLocation(planetShaderId, "shade"), 0.3); // dark
+  glUniform1f(glGetUniformLocation(planetShaderId, "shade"), 0.2); // dark
 
   glUniform1f(glGetUniformLocation(planetShaderId, "amplitude"), mountAmp);
   glUniform1f(glGetUniformLocation(planetShaderId, "frequency"), mountFreq);
@@ -242,13 +242,13 @@ void drawObjects(GLuint shader)
 //  DrawModel(sphere, oceanShaderId, "inPosition", "inNormal", NULL);
 
   // Moon
-  vec3 moonColor = {0, 11 / 255, 11 / 255};
+  vec3 moonColor = {0, 128 / 255, 255 / 255};
   const float moonMountFreq = 0.01;
   const float moonMountAmp = 0.5;
 
-  moonTransl = T(200, 0, 0); // Translation
-  moonRot = Mult(Ry(0), S(0.2, 0.2, 0.2)); // Rotation
-  moonTransform = Mult(planetTransl, moonTransl);
+  moonTransl = Mult(Mult(Rz(0), Ry(time*0.0005)), T(180, 0, 0)); // Translation
+  moonRot = Mult(Ry(0), S(0.4, 0.4, 0.4)); // Rotation
+  moonTransform = Mult(planetTransl, Mult(moonTransl, moonRot));
 
   mv2 = Mult(modelViewMatrix, moonTransform);
   tx2 = Mult(textureMatrix, moonTransform);

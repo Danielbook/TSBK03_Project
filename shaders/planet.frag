@@ -160,8 +160,8 @@ void main() {
 
       if (lightSourceCoord.w > 0.0)
         if (distanceFromLight < shadowCoordinateWdivide.z) // shadow
-          shadow -= 0.5/64; // = 0.5 shadow if total shadow (for 64 samples)
+          shadow -= 0.5/128; // = 0.5 shadow if total shadow (for 64 samples)
     }
-    outColor = vec4(shadow * shade) + planetColor;
+    outColor = vec4(shadow * shade) * planetColor;
 }
 
