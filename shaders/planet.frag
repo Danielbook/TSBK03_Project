@@ -13,6 +13,10 @@ uniform vec3 lightPosition;
 uniform mat4 modelViewMatrix;
 uniform mat4 viewMatrix;
 
+uniform sampler2D textureUnit;
+in vec4 lightSourceCoord;
+uniform float shade;
+
 out vec4 outColor;
 
 vec3 mod289(vec3 x)
@@ -114,6 +118,7 @@ void main() {
   float kd = 0.02, ka = 0.1;
 
   vec4 lightPos = viewMatrix * vec4(lightPosition, 1.0);
+//  lightPosition;
   vec3 lightVector = lightPos.xyz - vPosition;
 
   float shoreLineTop = mountAmp/8.0+avgTemp-7.0;
@@ -130,10 +135,33 @@ void main() {
   finalColor=finalColor-0.04*pnoise(1.0*vPosition, vec3(10.0));
 
   ambient = ka * finalColor;
-  diffuse = kd * finalColor * max(0.0, dot(normalize(vNormal), lightVector));
+  diffuse = kd * finalColor * max(0.0, dot(lightVector, normalize(vNormal)));
 
-  finalColor = diffuse;
+  finalColor = diffuse + ambient;
 
-  outColor = vec4(finalColor, 1.0);
+  vec4 planetColor = vec4(finalColor, 1.0);
+
+//  outColor = vec4(finalColor, 1.0);
+
+  // Perform perspective division to get the actual texture position
+  vec4 shadowCoordinateWdivide = lightSourceCoord / lightSourceCoord.w;
+
+  // Used to lower moire' pattern and self-shadowing
+  // The optimal value here will vary with different GPU's depending on their Z buffer resolution.
+  shadowCoordinateWdivide.z -= 0.002; // 0.0005;
+
+  float shadow = 1.0;
+  float dx, dy;
+  for (dy = -3.5 ; dy <= 3.5 ; dy+=1.0)
+    for (dx = -3.5 ; dx <= 3.5 ; dx+=1.0)
+    {
+      float distanceFromLight = texture(textureUnit, shadowCoordinateWdivide.st + vec2(dx, dy)/250.0).x;
+      distanceFromLight = (distanceFromLight-0.5) * 2.0;
+
+      if (lightSourceCoord.w > 0.0)
+        if (distanceFromLight < shadowCoordinateWdivide.z) // shadow
+          shadow -= 0.5/64; // = 0.5 shadow if total shadow (for 64 samples)
+    }
+    outColor = vec4(shadow * shade) + planetColor;
 }
 

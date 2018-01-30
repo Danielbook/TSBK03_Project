@@ -7,10 +7,12 @@ uniform float frequency;
 uniform mat4 modelViewMatrix;
 uniform mat3 normalMatrix;
 uniform mat4 projectionMatrix;
+uniform mat4 textureMatrix;
 
 out vec3 vNormal;
 out vec3 vPosition;
 out float noise;
+out vec4 lightSourceCoord;
 
 vec3 mod289(vec3 x)
 {
@@ -117,6 +119,8 @@ void main() {
   gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
 
   vPosition = viewModelPosition.xyz;
+
+  lightSourceCoord = textureMatrix * vec4(inPosition, 1.0); // Transform vertex to light source coo
 
   vNormal = normalize(normalMatrix * inNormal);
 }
