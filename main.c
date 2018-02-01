@@ -108,70 +108,46 @@ Model *groundModel;
 
 GLsizei icoIndexCount;
 
-const GLuint PositionSlot = 0;
-void createIcosahedron()
-{
-  GLuint icoFaces[] = {
-          2, 1, 0,
-          3, 2, 0,
-          4, 3, 0,
-          5, 4, 0,
-          1, 5, 0,
+GLuint icoFaces[] = {
+        2, 1, 0,
+        3, 2, 0,
+        4, 3, 0,
+        5, 4, 0,
+        1, 5, 0,
 
-          11, 6,  7,
-          11, 7,  8,
-          11, 8,  9,
-          11, 9,  10,
-          11, 10, 6,
+        11, 6,  7,
+        11, 7,  8,
+        11, 8,  9,
+        11, 9,  10,
+        11, 10, 6,
 
-          1, 2, 6,
-          2, 3, 7,
-          3, 4, 8,
-          4, 5, 9,
-          5, 1, 10,
+        1, 2, 6,
+        2, 3, 7,
+        3, 4, 8,
+        4, 5, 9,
+        5, 1, 10,
 
-          2,  7, 6,
-          3,  8, 7,
-          4,  9, 8,
-          5, 10, 9,
-          1, 6, 10 };
+        2,  7, 6,
+        3,  8, 7,
+        4,  9, 8,
+        5, 10, 9,
+        1, 6, 10 };
 
-  GLfloat icoVerts[] = {
-          0.000f,  0.000f,  1.000f,
-          0.894f,  0.000f,  0.447f,
-          0.276f,  0.851f,  0.447f,
-          -0.724f,  0.526f,  0.447f,
-          -0.724f, -0.526f,  0.447f,
-          0.276f, -0.851f,  0.447f,
-          0.724f,  0.526f, -0.447f,
-          -0.276f,  0.851f, -0.447f,
-          -0.894f,  0.000f, -0.447f,
-          -0.276f, -0.851f, -0.447f,
-          0.724f, -0.526f, -0.447f,
-          0.000f,  0.000f, -1.000f };
+GLfloat icoVerts[] = {
+        0.000f,  0.000f,  1.000f,
+        0.894f,  0.000f,  0.447f,
+        0.276f,  0.851f,  0.447f,
+        -0.724f,  0.526f,  0.447f,
+        -0.724f, -0.526f,  0.447f,
+        0.276f, -0.851f,  0.447f,
+        0.724f,  0.526f, -0.447f,
+        -0.276f,  0.851f, -0.447f,
+        -0.894f,  0.000f, -0.447f,
+        -0.276f, -0.851f, -0.447f,
+        0.724f, -0.526f, -0.447f,
+        0.000f,  0.000f, -1.000f };
 
-  icoIndexCount = sizeof(icoFaces) / sizeof(icoFaces[0]);
-
-  // Create the VAO:
-  GLuint vao;
-  glGenVertexArrays(1, &vao);
-  glBindVertexArray(vao);
-
-  // Create the VBO for positions:
-  GLuint positions;
-  GLsizei stride = 3 * sizeof(float);
-  glGenBuffers(1, &positions);
-  glBindBuffer(GL_ARRAY_BUFFER, positions);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(icoVerts), icoVerts, GL_STATIC_DRAW);
-  glEnableVertexAttribArray(PositionSlot);
-  glVertexAttribPointer(PositionSlot, 3, GL_FLOAT, GL_FALSE, stride, 0);
-
-  // Create the VBO for indices:
-  GLuint indices;
-  glGenBuffers(1, &indices);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(icoFaces), icoFaces, GL_STATIC_DRAW);
-}
+static const GLuint PositionSlot = 0;
 
 void init(void)
 {
@@ -200,8 +176,6 @@ void init(void)
           6);
 
 
-  createIcosahedron();
-
   printError("load models");
 
   glutTimerFunc(5, &onTimer, 0);
@@ -216,6 +190,38 @@ void updatePositions()
 {
   p_light.x = light_mvnt * cos(glutGet(GLUT_ELAPSED_TIME) / 1000.0);
   p_light.z = light_mvnt * sin(glutGet(GLUT_ELAPSED_TIME) / 1000.0);
+}
+
+void drawIco(void)
+{
+  icoIndexCount = sizeof(icoFaces) / sizeof(icoFaces[0]);
+
+  // Create the VAO:
+  GLuint vao;
+  glGenVertexArrays(1, &vao);
+  glBindVertexArray(vao);
+
+  // Create the VBO for positions:
+  GLuint positions;
+  GLsizei stride = 3 * sizeof(float);
+  glGenBuffers(1, &positions);
+  glBindBuffer(GL_ARRAY_BUFFER, positions);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(icoVerts), icoVerts, GL_STATIC_DRAW);
+  glEnableVertexAttribArray(PositionSlot);
+  glVertexAttribPointer(PositionSlot, 3, GL_FLOAT, GL_FALSE, stride, 0);
+
+  // Create the VBO for indices:
+  GLuint indices;
+  glGenBuffers(1, &indices);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(icoFaces), icoFaces, GL_STATIC_DRAW);
+
+  // Render the scene:
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glPatchParameteri(GL_PATCH_VERTICES, 3);
+  glDrawElements(GL_PATCHES, icoIndexCount, GL_UNSIGNED_INT, 0);
+
+  glBindVertexArray(0);
 }
 
 void drawObjects(GLuint shader)
@@ -252,22 +258,24 @@ void drawObjects(GLuint shader)
 //  glUniform1f(glGetUniformLocation(projTexShaderId, "shade"), 0.9); // Brighter objects
 
   // SUN
-//  const float sunAmp = 0.1;
-//  const float sunFreq = 80;
-//  mv2 = Mult(modelViewMatrix, T(0, 0, 0));
-//  mat3 sunNormalMatrix = InverseTranspose(T(0, 0, 0));
-////  tx2 = Mult(textureMatrix, T(0, 0, 0));
-//
-//  glUseProgram(sunShaderId);
-//  glUniform1f(glGetUniformLocation(sunShaderId, "amplitude"), sunAmp);
-//  glUniform1f(glGetUniformLocation(sunShaderId, "frequency"), sunFreq);
-//  glUniform1f(glGetUniformLocation(sunShaderId, "time"), time);
-//  glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
-//  glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "modelViewMatrix"), 1, GL_TRUE, mv2.m);
-//  glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "normalMatrix"), 1, GL_TRUE, sunNormalMatrix.m);
-////  glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "textureMatrix"), 1, GL_TRUE, tx2.m);
-//
-//  DrawModel(sphere, sunShaderId, "inPosition", "inNormal", NULL);
+  const float sunAmp = 0.1;
+  const float sunFreq = 80;
+  mv2 = Mult(modelViewMatrix, T(0, 0, 0));
+  mat3 sunNormalMatrix = InverseTranspose(T(0, 0, 0));
+//  tx2 = Mult(textureMatrix, T(0, 0, 0));
+
+  glUseProgram(sunShaderId);
+  glUniform1f(glGetUniformLocation(sunShaderId, "amplitude"), sunAmp);
+  glUniform1f(glGetUniformLocation(sunShaderId, "frequency"), sunFreq);
+  glUniform1f(glGetUniformLocation(sunShaderId, "time"), time);
+  glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+  glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "modelViewMatrix"), 1, GL_TRUE, mv2.m);
+  glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "normalMatrix"), 1, GL_TRUE, sunNormalMatrix.m);
+//  glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "textureMatrix"), 1, GL_TRUE, tx2.m);
+
+//  drawIco();
+
+  DrawModel(sphere, sunShaderId, "inPosition", "inNormal", NULL);
 
   // PLANET
   const float avgTemp = 7.0;
@@ -302,44 +310,32 @@ void drawObjects(GLuint shader)
   glUniformMatrix4fv(glGetUniformLocation(planetShaderId, "viewMatrix"), 1, GL_TRUE, modelViewMatrix.m);
   glUniformMatrix4fv(glGetUniformLocation(planetShaderId, "modelViewMatrix"), 1, GL_TRUE, mv2.m);
   glUniformMatrix4fv(glGetUniformLocation(planetShaderId, "textureMatrix"), 1, GL_TRUE, tx2.m);
-
-  // Render the scene:
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  glPatchParameteri(GL_PATCH_VERTICES, 3);
-  glDrawElements(GL_PATCHES, icoIndexCount, GL_UNSIGNED_INT, 0);
-
 //  DrawModel(ico, planetShaderId, "inPosition", "inNormal", NULL);
+
+  drawIco();
 
   glUniform1f(glGetUniformLocation(planetShaderId, "shade"), 0.9); // Brighter objects
 
-
-  //
-
-  // Render the scene:
-
-//  glDrawElements(GL_PATCHES, ico->numIndices, GL_UNSIGNED_INT, 0);
-//
-//
-
+  
   // Ocean
-//  vec3 oceanColor = {0, 11 / 255, 255 / 255};
-//  oceanTransform = Mult(planetTransform, S(0.97, 0.97, 0.97)); // Planet pos + rotation
-//  mv2 = Mult(modelViewMatrix, oceanTransform);
-//  tx2 = Mult(textureMatrix, oceanTransform);
-//  mat3 oceanNormalMatrix = InverseTranspose(mv2);
-//
-//  glUseProgram(oceanShaderId);
-//  glUniform1f(glGetUniformLocation(oceanShaderId, "time"), time);
-//  glUniform3f(glGetUniformLocation(oceanShaderId, "lightPosition"), p_light.x, p_light.y, p_light.z);
-//  glUniform1f(glGetUniformLocation(oceanShaderId, "avgTemp"), avgTemp);
-//  glUniform3f(glGetUniformLocation(oceanShaderId, "oceanColor"), oceanColor.x, oceanColor.y, oceanColor.z);
-//  glUniformMatrix3fv(glGetUniformLocation(oceanShaderId, "normalMatrix"), 1, GL_TRUE, oceanNormalMatrix.m);
-//  glUniformMatrix4fv(glGetUniformLocation(oceanShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
-//  glUniformMatrix4fv(glGetUniformLocation(oceanShaderId, "viewMatrix"), 1, GL_TRUE, modelViewMatrix.m);
-//  glUniformMatrix4fv(glGetUniformLocation(oceanShaderId, "modelViewMatrix"), 1, GL_TRUE, mv2.m);
-//  glUniformMatrix4fv(glGetUniformLocation(oceanShaderId, "textureMatrix"), 1, GL_TRUE, tx2.m);
-//
-//  DrawModel(sphere, oceanShaderId, "inPosition", "inNormal", NULL);
+  vec3 oceanColor = {0, 11 / 255, 255 / 255};
+  oceanTransform = Mult(planetTransform, S(0.97, 0.97, 0.97)); // Planet pos + rotation
+  mv2 = Mult(modelViewMatrix, oceanTransform);
+  tx2 = Mult(textureMatrix, oceanTransform);
+  mat3 oceanNormalMatrix = InverseTranspose(mv2);
+
+  glUseProgram(oceanShaderId);
+  glUniform1f(glGetUniformLocation(oceanShaderId, "time"), time);
+  glUniform3f(glGetUniformLocation(oceanShaderId, "lightPosition"), p_light.x, p_light.y, p_light.z);
+  glUniform1f(glGetUniformLocation(oceanShaderId, "avgTemp"), avgTemp);
+  glUniform3f(glGetUniformLocation(oceanShaderId, "oceanColor"), oceanColor.x, oceanColor.y, oceanColor.z);
+  glUniformMatrix3fv(glGetUniformLocation(oceanShaderId, "normalMatrix"), 1, GL_TRUE, oceanNormalMatrix.m);
+  glUniformMatrix4fv(glGetUniformLocation(oceanShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+  glUniformMatrix4fv(glGetUniformLocation(oceanShaderId, "viewMatrix"), 1, GL_TRUE, modelViewMatrix.m);
+  glUniformMatrix4fv(glGetUniformLocation(oceanShaderId, "modelViewMatrix"), 1, GL_TRUE, mv2.m);
+  glUniformMatrix4fv(glGetUniformLocation(oceanShaderId, "textureMatrix"), 1, GL_TRUE, tx2.m);
+
+  DrawModel(sphere, oceanShaderId, "inPosition", "inNormal", NULL);
 
   // Atmosphere
 //  atmosphereTransform = Mult(planetTransform, S(1.15, 1.15, 1.15)); // Planet pos + rotation
@@ -520,6 +516,7 @@ int main(int argc, char *argv[])
 
   glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE | GLUT_STENCIL);
   glutInitWindowSize(RENDER_WIDTH, RENDER_HEIGHT);
+
   glutInitContextVersion(3, 2);
   glutCreateWindow("TSBK03 Project");
 
