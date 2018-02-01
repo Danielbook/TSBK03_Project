@@ -1,12 +1,13 @@
 #version 410
-in vec3 gFacetNormal;
-in vec3 gTriDistance;
-in vec3 gPatchDistance;
+//in vec3 gFacetNormal;
+//in vec3 gTriDistance;
+//in vec3 gPatchDistance;
 in float gPrimitive;
+in vec3 gsNormal;
 
-uniform vec3 DiffuseMaterial;
-uniform vec3 AmbientMaterial;
-out vec4 FragColor;
+uniform vec3 lightPosition;
+out vec4 outColor;
+//out vec4 FragColor;
 
 //in vec3 vNormal;
 //in vec3 vPosition;
@@ -24,7 +25,7 @@ out vec4 FragColor;
 //uniform sampler2D textureUnit;
 //uniform float shade;
 //
-//out vec4 outColor;
+
 
 vec3 mod289(vec3 x)
 {
@@ -129,16 +130,21 @@ float amplify(float d, float scale, float offset)
 }
 
 void main() {
-  vec3 N = normalize(gFacetNormal);
-  vec3 L = vec3(0, 1, 0);
-  float df = abs(dot(N, L));
-  vec3 color = vec3(0.04f, 0.04f, 0.04f) + df * vec3(0, 0.75, 0.75);
+  float shade = abs(gsNormal.z);
 
-  float d1 = min(min(gTriDistance.x, gTriDistance.y), gTriDistance.z);
-  float d2 = min(min(gPatchDistance.x, gPatchDistance.y), gPatchDistance.z);
-  color = amplify(d1, 40, -0.5) * amplify(d2, 60, -0.5) * color;
 
-  FragColor = vec4(color, 1.0);
+    outColor = vec4(shade, shade, shade, 1.0);
+
+//  vec3 N = normalize(gFacetNormal);
+//  vec3 L = lightPosition - N;
+//  float df = abs(dot(N, L));
+//  vec3 color = vec3(0.04f, 0.04f, 0.04f) + df * vec3(0, 0.75, 0.75);
+//
+//  float d1 = min(min(gTriDistance.x, gTriDistance.y), gTriDistance.z);
+//  float d2 = min(min(gPatchDistance.x, gPatchDistance.y), gPatchDistance.z);
+//  color = amplify(d1, 40, -0.5) * amplify(d2, 60, -0.5) * color;
+//
+//  FragColor = vec4(color, 1.0);
 
 //  vec3 ambient, diffuse, finalColor;
 //  float kd = 0.02, ka = 0.1;

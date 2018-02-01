@@ -52,7 +52,7 @@ Point3D l_light = {1, 0, 0};
 //Point3D l_light = {0, 0, -1};
 
 //Camera position
-Point3D p_camera = {0, 0, 100};
+Point3D p_camera = {0, 0, 15};
 
 //Camera lookAt
 Point3D l_camera = {0, 0, 0};
@@ -61,6 +61,11 @@ Point3D l_camera = {0, 0, 0};
 GLuint texture;
 
 GLfloat a;
+
+GLint TessLevelInner = 1;
+GLint TessLevelOuter = 1;
+GLfloat mountAmp = 0.0f;
+GLfloat mountFreq = 0.0f;
 
 int frame = 0, time, timebase = 0, deltaTime = 0, startTime = 0, nVertices = 0;
 
@@ -71,9 +76,6 @@ void onTimer(int value)
   glutPostRedisplay();
   glutTimerFunc(5, &onTimer, value);
 }
-
-GLint TessLevelInner = 4;
-GLint TessLevelOuter = 4;
 
 void loadShadowShaders()
 {
@@ -106,7 +108,7 @@ Model *groundModel;
 
 GLsizei icoIndexCount;
 
-static const GLuint PositionSlot = 0;
+const GLuint PositionSlot = 0;
 void createIcosahedron()
 {
   GLuint icoFaces[] = {
@@ -181,12 +183,12 @@ void init(void)
 
   // GL inits
 //  projectionMatrix = perspective(90, RENDER_WIDTH / RENDER_HEIGHT, 1.0, 4000);
-  projectionMatrix = perspective(60, RENDER_WIDTH/RENDER_HEIGHT, 1.0, 10000);
+  projectionMatrix = perspective(30, RENDER_WIDTH/RENDER_HEIGHT, 0.1, 1000);
+//  projectionMatrix = frustum(-1.0f, +1.0f, -1.0f, +1.0f, 1.0, 250);
   printError("GL inits");
 
   // Upload geometry to the GPU:
   sphere = LoadModelPlus("../assets/bestSphere.obj"); // Sphere
-  ico = LoadModelPlus("../assets/ico.obj"); // Sphere
 
   groundModel = LoadDataToModel(
           ground,
@@ -268,8 +270,6 @@ void drawObjects(GLuint shader)
 //  DrawModel(sphere, sunShaderId, "inPosition", "inNormal", NULL);
 
   // PLANET
-  const float mountAmp = 20;
-  const float mountFreq = 0.03;
   const float avgTemp = 7.0;
 
   vec3 surfaceColor = {0.0, 0.4, 0.1};
@@ -277,11 +277,11 @@ void drawObjects(GLuint shader)
   vec3 sandColor = {0.95, 0.67, 0.26};
 
   planetTransl = Mult(Rz(0), T(0, 0, 0)); // Planet translation
-  planetRot = Mult(Rz(0), S(50.0, 50.0, 50.0)); // Planet Rotation
+  planetRot = Mult(Rz(0), S(1.0, 2.0, 2.0)); // Planet Rotation
   planetTransform = Mult(planetTransl, planetRot);
 
-  mv2 = Mult(modelViewMatrix, planetTransform);
-  tx2 = Mult(textureMatrix, planetTransform);
+  mv2 = Mult(modelViewMatrix, planetTransl);
+  tx2 = Mult(textureMatrix, planetTransl);
   mat3 planetNormalMatrix = InverseTranspose(mv2);
 
   glUseProgram(planetShaderId);
@@ -459,7 +459,7 @@ void reshape(GLsizei w, GLsizei h)
 {
   glViewport(0, 0, w, h);
   GLfloat ratio = (GLfloat) w / (GLfloat) h;
-  projectionMatrix = perspective(60, RENDER_WIDTH/RENDER_HEIGHT, 1.0, 4000);
+  projectionMatrix = perspective(30, RENDER_WIDTH/RENDER_HEIGHT, 0.1, 1000);
 }
 
 void processNormalKeys(unsigned char key, int x, int y)
@@ -474,7 +474,8 @@ void processNormalKeys(unsigned char key, int x, int y)
       break;
     }
     case 's': {
-      TessLevelInner -= 1;
+      if(TessLevelInner > 1)
+        TessLevelInner -= 1;
       break;
     }
     case 'd': {
@@ -482,7 +483,32 @@ void processNormalKeys(unsigned char key, int x, int y)
       break;
     }
     case 'a': {
-      TessLevelOuter -= 1;
+      if(TessLevelOuter > 1) {}
+        TessLevelOuter -= 1;
+      break;
+    }
+    case 'i': {
+      mountAmp += 0.1;
+      printf("Mountain amplitude: %f\n", mountAmp);
+      break;
+    }
+    case 'k': {
+      if(mountAmp > 0){
+        mountAmp -= 0.1;
+        printf("Mountain amplitude: %f\n", mountAmp);
+      }
+      break;
+    }
+    case 'u': {
+      mountFreq += 0.01;
+      printf("Mountain freq: %f\n", mountFreq);
+      break;
+    }
+    case 'j': {
+      if(mountFreq > 0) {
+        mountFreq -= 0.01;
+        printf("Mountain freq: %f\n", mountFreq);
+      }
       break;
     }
   }
@@ -494,7 +520,6 @@ int main(int argc, char *argv[])
 
   glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE | GLUT_STENCIL);
   glutInitWindowSize(RENDER_WIDTH, RENDER_HEIGHT);
-
   glutInitContextVersion(3, 2);
   glutCreateWindow("TSBK03 Project");
 
@@ -504,17 +529,17 @@ int main(int argc, char *argv[])
   fbo = initFBO2(RENDER_WIDTH, RENDER_HEIGHT, 0, 1);
 
   glEnable(GL_DEPTH_TEST);
-  glClearColor(1, 0, 0, 1.0f);
+  glClearColor(0.4, 0.4, 0.4, 1.0f);
   glEnable(GL_CULL_FACE);
 
   glEnable(GL_BLEND);
   glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
   glutDisplayFunc(renderScene);
-//  glutReshapeFunc(reshape);
+  glutReshapeFunc(reshape);
 
   glutRepeatingTimerFunc(20); // MicroGlut only
-glutKeyboardFunc(processNormalKeys); //disable this to get zpr to work
+  glutKeyboardFunc(processNormalKeys); //disable this to get zpr to work
   glutMainLoop();
   exit(0);
 }

@@ -2,15 +2,19 @@
 layout(triangles) in;
 layout(triangle_strip, max_vertices = 3) out;
 
-in vec3 tePosition[3];
-in vec3 tePatchDistance[3];
+//in vec3 tePosition[3];
+//in vec3 tePatchDistance[3];
+in vec3 teNormal[3];
 
 uniform mat4 modelViewMatrix;
 uniform mat3 normalMatrix;
+uniform float amplitude;
+uniform float frequency;
 
-out vec3 gFacetNormal;
-out vec3 gPatchDistance;
-out vec3 gTriDistance;
+out vec3 gsNormal;
+//out vec3 gFacetNormal;
+//out vec3 gPatchDistance;
+//out vec3 gTriDistance;
 
 // Move displacement to this file!
 vec3 mod289(vec3 x)
@@ -109,25 +113,47 @@ float pnoise(vec3 P, vec3 rep)
 
 void main()
 {
-    vec3 A = tePosition[2] - tePosition[0];
-    vec3 B = tePosition[1] - tePosition[0];
-    gFacetNormal = normalMatrix * normalize(cross(A, B));
+  vec4 modpos[3];
+  float t;
 
-    //  float vNoise = amplitude*pnoise(frequency*inPosition, vec3(20.0));
 
-    //  vec3 pos = inPosition + vNoise * inNormal;
-    
-    gPatchDistance = tePatchDistance[0];
-    gTriDistance = vec3(1, 0, 0);
-    gl_Position = gl_in[0].gl_Position; EmitVertex();
+  // Recalc normals!
+  modpos[0] = gl_in[0].gl_Position + amplitude * pnoise(gl_in[0].gl_Position.xyz, vec3(20.0)) * vec4(teNormal[0], 1.0);
+  modpos[1] = gl_in[1].gl_Position + amplitude * pnoise(gl_in[1].gl_Position.xyz, vec3(20.0)) * vec4(teNormal[1], 1.0);
+  modpos[2] = gl_in[2].gl_Position + amplitude * pnoise(gl_in[2].gl_Position.xyz, vec3(20.0)) * vec4(teNormal[2], 1.0);
 
-    gPatchDistance = tePatchDistance[1];
-    gTriDistance = vec3(0, 1, 0);
-    gl_Position = gl_in[1].gl_Position; EmitVertex();
+//  modpos[0] = gl_in[0].gl_Position;
+//  modpos[1] = gl_in[1].gl_Position;
+//  modpos[2] = gl_in[2].gl_Position;
 
-    gPatchDistance = tePatchDistance[2];
-    gTriDistance = vec3(0, 0, 1);
-    gl_Position = gl_in[2].gl_Position; EmitVertex();
+  vec3 v1 = vec3(modpos[1] - modpos[0]);
+  vec3 v2 = vec3(modpos[2] - modpos[0]);
+  vec3 n = normalMatrix * normalize(cross(v2, v1));
 
-    EndPrimitive();
+//  vec3 A = tePosition[2] - tePosition[0];
+//  vec3 B = tePosition[1] - tePosition[0];
+//  gFacetNormal = normalMatrix * normalize(cross(A, B));
+
+//  gPatchDistance = tePatchDistance[0];
+//  gTriDistance = vec3(1, 0, 0);
+  gl_Position = gl_in[0].gl_Position + amplitude * pnoise(gl_in[0].gl_Position.xyz, vec3(20.0)) * vec4(teNormal[0], 1.0);
+//  gl_Position = gl_in[0].gl_Position;
+  gsNormal = n;
+  EmitVertex();
+
+//  gPatchDistance = tePatchDistance[1];
+//  gTriDistance = vec3(0, 1, 0);
+  gl_Position = gl_in[1].gl_Position + amplitude * pnoise(gl_in[1].gl_Position.xyz, vec3(20.0)) * vec4(teNormal[1], 1.0);
+//  gl_Position = gl_in[1].gl_Position;
+  gsNormal = n;
+  EmitVertex();
+
+//  gPatchDistance = tePatchDistance[2];
+//  gTriDistance = vec3(0, 0, 1);
+  gl_Position = gl_in[2].gl_Position + amplitude * pnoise(gl_in[2].gl_Position.xyz, vec3(20.0)) * vec4(teNormal[2], 1.0);
+//  gl_Position = gl_in[2].gl_Position;
+  gsNormal = n;
+  EmitVertex();
+
+  EndPrimitive();
 }
