@@ -310,22 +310,13 @@ void drawObjects(GLuint shader)
   glUniformMatrix4fv(glGetUniformLocation(planetShaderId, "viewMatrix"), 1, GL_TRUE, modelViewMatrix.m);
   glUniformMatrix4fv(glGetUniformLocation(planetShaderId, "modelViewMatrix"), 1, GL_TRUE, mv2.m);
   glUniformMatrix4fv(glGetUniformLocation(planetShaderId, "textureMatrix"), 1, GL_TRUE, tx2.m);
-
-//  drawIco();
-
 //  DrawModel(ico, planetShaderId, "inPosition", "inNormal", NULL);
+
+  drawIco();
 
   glUniform1f(glGetUniformLocation(planetShaderId, "shade"), 0.9); // Brighter objects
 
-
-  //
-
-  // Render the scene:
-
-//  glDrawElements(GL_PATCHES, ico->numIndices, GL_UNSIGNED_INT, 0);
-//
-//
-
+  
   // Ocean
   vec3 oceanColor = {0, 11 / 255, 255 / 255};
   oceanTransform = Mult(planetTransform, S(0.97, 0.97, 0.97)); // Planet pos + rotation
