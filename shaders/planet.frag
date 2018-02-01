@@ -1,23 +1,30 @@
 #version 410
+in vec3 gFacetNormal;
+in vec3 gTriDistance;
+in vec3 gPatchDistance;
+in float gPrimitive;
 
-in vec3 vNormal;
-in vec3 vPosition;
-in float noise;
+uniform vec3 DiffuseMaterial;
+uniform vec3 AmbientMaterial;
+out vec4 FragColor;
 
-uniform float mountAmp;
-uniform vec3 surfaceColor;
-uniform vec3 snowColor;
-uniform vec3 sandColor;
-uniform float avgTemp;
-uniform vec3 lightPosition;
-uniform mat4 modelViewMatrix;
-uniform mat4 viewMatrix;
-
-uniform sampler2D textureUnit;
-in vec4 lightSourceCoord;
-uniform float shade;
-
-out vec4 outColor;
+//in vec3 vNormal;
+//in vec3 vPosition;
+//in float noise;
+//in vec4 lightSourceCoord;
+//
+//uniform float mountAmp;
+//uniform vec3 surfaceColor;
+//uniform vec3 snowColor;
+//uniform vec3 sandColor;
+//uniform float avgTemp;
+//uniform vec3 lightPosition;
+//uniform mat4 modelViewMatrix;
+//uniform mat4 viewMatrix;
+//uniform sampler2D textureUnit;
+//uniform float shade;
+//
+//out vec4 outColor;
 
 vec3 mod289(vec3 x)
 {
@@ -113,55 +120,73 @@ float pnoise(vec3 P, vec3 rep)
   return 2.2 * n_xyz;
 }
 
+float amplify(float d, float scale, float offset)
+{
+    d = scale * d + offset;
+    d = clamp(d, 0, 1);
+    d = 1 - exp2(-2*d*d);
+    return d;
+}
+
 void main() {
-  vec3 ambient, diffuse, finalColor;
-  float kd = 0.02, ka = 0.1;
+  vec3 N = normalize(gFacetNormal);
+  vec3 L = vec3(0, 1, 0);
+  float df = abs(dot(N, L));
+  vec3 color = vec3(0.04f, 0.04f, 0.04f) + df * vec3(0, 0.75, 0.75);
 
-  vec4 lightPos = viewMatrix * vec4(lightPosition, 1.0);
-//  lightPosition;
-  vec3 lightVector = lightPos.xyz - vPosition;
+  float d1 = min(min(gTriDistance.x, gTriDistance.y), gTriDistance.z);
+  float d2 = min(min(gPatchDistance.x, gPatchDistance.y), gPatchDistance.z);
+  color = amplify(d1, 40, -0.5) * amplify(d2, 60, -0.5) * color;
 
-  float shoreLineTop = mountAmp/8.0+avgTemp-7.0;
+  FragColor = vec4(color, 1.0);
 
-  shoreLineTop = max(-10, 0.01);
-
-  // Sandy shores
-  finalColor=mix(sandColor, surfaceColor, smoothstep(0.0, shoreLineTop, noise));
-
-  // Snow on peaks
-  finalColor=mix(finalColor, snowColor, smoothstep(avgTemp, avgTemp+7.0, noise));
-
-  // Low freq noise
-  finalColor=finalColor-0.04*pnoise(1.0*vPosition, vec3(10.0));
-
-  ambient = ka * finalColor;
-  diffuse = kd * finalColor * max(0.0, dot(lightVector, normalize(vNormal)));
-
-  finalColor = diffuse + ambient;
-
-  vec4 planetColor = vec4(finalColor, 1.0);
-
-//  outColor = vec4(finalColor, 1.0);
-
-  // Perform perspective division to get the actual texture position
-  vec4 shadowCoordinateWdivide = lightSourceCoord / lightSourceCoord.w;
-
-  // Used to lower moire' pattern and self-shadowing
-  // The optimal value here will vary with different GPU's depending on their Z buffer resolution.
-  shadowCoordinateWdivide.z -= 0.002; // 0.0005;
-
-  float shadow = 1.0;
-  float dx, dy;
-  for (dy = -3.5 ; dy <= 3.5 ; dy+=1.0)
-    for (dx = -3.5 ; dx <= 3.5 ; dx+=1.0)
-    {
-      float distanceFromLight = texture(textureUnit, shadowCoordinateWdivide.st + vec2(dx, dy)/250.0).x;
-      distanceFromLight = (distanceFromLight-0.5) * 2.0;
-
-      if (lightSourceCoord.w > 0.0)
-        if (distanceFromLight < shadowCoordinateWdivide.z) // shadow
-          shadow -= 0.5/128; // = 0.5 shadow if total shadow (for 64 samples)
-    }
-    outColor = vec4(shadow * shade) * planetColor;
+//  vec3 ambient, diffuse, finalColor;
+//  float kd = 0.02, ka = 0.1;
+//
+//  vec4 lightPos = viewMatrix * vec4(lightPosition, 1.0);
+//  vec3 lightVector = lightPos.xyz - vPosition;
+//
+//  float shoreLineTop = mountAmp/8.0+avgTemp-7.0;
+//
+//  shoreLineTop = max(-10, 0.01);
+//
+//  // Sandy shores
+//  finalColor=mix(sandColor, surfaceColor, smoothstep(0.0, shoreLineTop, noise));
+//
+//  // Snow on peaks
+//  finalColor=mix(finalColor, snowColor, smoothstep(avgTemp, avgTemp+7.0, noise));
+//
+//  // Low freq noise
+//  finalColor=finalColor-0.04*pnoise(1.0*vPosition, vec3(10.0));
+//
+//  ambient = ka * finalColor;
+//  diffuse = kd * finalColor * max(0.0, dot(lightVector, normalize(vNormal)));
+//
+//  finalColor = diffuse;
+//
+//  vec4 planetColor = vec4(finalColor, 1.0);
+//
+////  outColor = vec4(finalColor, 1.0);
+//
+//  // Perform perspective division to get the actual texture position
+//  vec4 shadowCoordinateWdivide = lightSourceCoord / lightSourceCoord.w;
+//
+//  // Used to lower moire' pattern and self-shadowing
+//  // The optimal value here will vary with different GPU's depending on their Z buffer resolution.
+//  shadowCoordinateWdivide.z -= 0.002; // 0.0005;
+//
+//  float shadow = 1.0;
+//  float dx, dy;
+//  for (dy = -3.5 ; dy <= 3.5 ; dy+=1.0)
+//    for (dx = -3.5 ; dx <= 3.5 ; dx+=1.0)
+//    {
+//      float distanceFromLight = texture(textureUnit, shadowCoordinateWdivide.st + vec2(dx, dy)/250.0).x;
+//      distanceFromLight = (distanceFromLight-0.5) * 2.0;
+//
+//      if (lightSourceCoord.w > 0.0)
+//        if (distanceFromLight < shadowCoordinateWdivide.z) // shadow
+//          shadow -= 0.5/64; // = 0.5 shadow if total shadow (for 64 samples)
+//    }
+//    outColor = vec4(shadow * shade) * planetColor;
 }
 

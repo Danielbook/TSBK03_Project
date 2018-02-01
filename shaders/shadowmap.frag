@@ -1,4 +1,4 @@
-#version 150
+#version 410
 
 // Projected texture demo
 // Based on a demo by Fabien Sanglard, http://www.fabiensanglard.net/shadowmapping/index.php

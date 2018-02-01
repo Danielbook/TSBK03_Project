@@ -1,15 +1,20 @@
-
-varying vec3 vNormal;
-varying vec3 pos;
+#version 410
+in vec3 inPosition;
+in vec3 inNormal;
 
 uniform float time;
-uniform float atmosphereHeight;
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+uniform mat3 normalMatrix;
+
+out vec3 vNormal;
+out vec3 vPosition;
 
 void main() {
+//	vNormal = normal;
+//	pos = position+normal*atmosphereHeight;
 
-	vNormal = normal;
-
-	pos = position+normal*atmosphereHeight;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4( pos, 1.0 );
-
+	vNormal = normalize(normalMatrix * inNormal);
+  vPosition = inPosition;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(vPosition, 1.0 );
 }

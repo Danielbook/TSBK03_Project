@@ -6,12 +6,13 @@ uniform float time;
 uniform float avgTemp;
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
+uniform mat3 normalMatrix;
 
 out vec3 vNormal;
 out vec3 vPosition;
 
 void main() {
-	vNormal = inNormal;
+	vNormal = normalize(normalMatrix * inNormal);
 
 	vPosition = inPosition;
 

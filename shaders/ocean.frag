@@ -7,6 +7,7 @@ uniform float time;
 uniform vec3 lightPosition;
 uniform vec3 cameraPosition;
 uniform vec3 oceanColor;
+uniform mat4 viewMatrix;
 uniform float planetRadius;
 uniform float avgTemp;
 
@@ -106,14 +107,16 @@ float pnoise(vec3 P, vec3 rep)
   return 2.2 * n_xyz;
 }
 
-
 void main() {
   // set up variables
   vec3 lightColor = vec3(1.0);
 	vec3 light = normalize(lightPosition);
+
+	vec4 lightPos = viewMatrix * vec4(lightPosition, 1.0);
+  vec3 lightVector = lightPos.xyz - vPosition;
+
   vec3 V = normalize(cameraPosition-vPosition);
-  vec3 L = normalize(lightPosition-vPosition);
-  vec3 R = -reflect(L, vNormal);
+  vec3 R = -reflect(lightVector, vNormal);
   float oceanOpacity = 0.5;
 
   float kd = 0.7;
@@ -128,8 +131,8 @@ void main() {
   finalColor = finalColor+specular;
 
   vec3 ambient  = ka * finalColor;
-  vec3 diffuse  = kd * finalColor * max(0.0, dot(vNormal, light));
-  finalColor = ambient+diffuse;
+  vec3 diffuse  = kd * finalColor * max(0.0, dot(vNormal, lightVector));
+  finalColor = ambient + diffuse;
 
   outColor = vec4(finalColor, 1.0);
 }
