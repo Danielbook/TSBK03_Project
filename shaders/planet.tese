@@ -42,7 +42,7 @@ void main()
   tePatchDistance = gl_TessCoord;
   tePosition = normalize(p0 + p1 + p2);
   teNormal = n0 + n1 + n2; // Sum with weights from the barycentric coords any way we like
-  gl_Position = projectionMatrix * modelViewMatrix * vec4(tePosition, 1);
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(tePosition, 1.0);
 
 //  vec3 p0 = gl_TessCoord.x * tcPosition[0]; // Barycentric!
 //  vec3 p1 = gl_TessCoord.y * tcPosition[1];

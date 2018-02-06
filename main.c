@@ -63,7 +63,9 @@ GLuint texture;
 GLfloat a;
 
 GLint TessLevelInner = 4;
-GLint TessLevelOuter = 4;
+GLint TessLevelOuter1 = 4;
+GLint TessLevelOuter2 = 4;
+GLint TessLevelOuter3 = 4;
 GLfloat mountAmp = 0.0f;
 GLfloat mountFreq = 0.0f;
 
@@ -296,7 +298,9 @@ void drawObjects(GLuint shader)
 
   glUniform1f(glGetUniformLocation(planetShaderId, "shade"), 0.2); // dark
   glUniform1i(glGetUniformLocation(planetShaderId, "TessLevelInner"), TessLevelInner);
-  glUniform1i(glGetUniformLocation(planetShaderId, "TessLevelOuter"), TessLevelOuter);
+  glUniform1i(glGetUniformLocation(planetShaderId, "TessLevelOuter1"), TessLevelOuter1);
+  glUniform1i(glGetUniformLocation(planetShaderId, "TessLevelOuter2"), TessLevelOuter2);
+  glUniform1i(glGetUniformLocation(planetShaderId, "TessLevelOuter3"), TessLevelOuter3);
   glUniform1f(glGetUniformLocation(planetShaderId, "amplitude"), mountAmp);
   glUniform1f(glGetUniformLocation(planetShaderId, "frequency"), mountFreq);
   glUniform1f(glGetUniformLocation(planetShaderId, "avgTemp"), avgTemp);
@@ -477,18 +481,49 @@ void processNormalKeys(unsigned char key, int x, int y)
       }
       break;
     }
-    case 'd': {
-      TessLevelOuter += 1;
-      printf("TessLevelOuter: %i\n", TessLevelOuter);
+
+    //
+    case '2': {
+      TessLevelOuter1 += 1;
+      printf("TessLevelOuter1: %i\n", TessLevelOuter1);
       break;
     }
-    case 'a': {
-      if(TessLevelOuter > 1) {
-        TessLevelOuter -= 1;
-        printf("TessLevelOuter: %i\n", TessLevelOuter);
+    case '1': {
+      if(TessLevelOuter1 > 1) {
+        TessLevelOuter1 -= 1;
+        printf("TessLevelOuter1: %i\n", TessLevelOuter1);
       }
       break;
     }
+
+      //
+    case '4': {
+      TessLevelOuter2 += 1;
+      printf("TessLevelOuter2: %i\n", TessLevelOuter2);
+      break;
+    }
+    case '3': {
+      if(TessLevelOuter2 > 1) {
+        TessLevelOuter2 -= 1;
+        printf("TessLevelOuter2: %i\n", TessLevelOuter2);
+      }
+      break;
+    }
+
+    //
+    case '6': {
+      TessLevelOuter3 += 1;
+      printf("TessLevelOuter3: %i\n", TessLevelOuter3);
+      break;
+    }
+    case '5': {
+      if(TessLevelOuter3 > 1) {
+        TessLevelOuter3 -= 1;
+        printf("TessLevelOuter3: %i\n", TessLevelOuter3);
+      }
+      break;
+    }
+
     case 'i': {
       mountAmp += 0.1;
       printf("Mountain amplitude: %f\n", mountAmp);

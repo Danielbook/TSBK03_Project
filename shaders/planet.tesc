@@ -13,7 +13,9 @@ out vec3 tcNormal[]; // Output of TC
 //out float tcNoise[];
 
 uniform int TessLevelInner; // Sent from main program
-uniform int TessLevelOuter;
+uniform int TessLevelOuter1;
+uniform int TessLevelOuter2;
+uniform int TessLevelOuter3;
 
 #define ID gl_InvocationID
 
@@ -23,9 +25,9 @@ void main()
   tcNormal[ID] = vNormal[ID];
 
   gl_TessLevelInner[0] = TessLevelInner;
-  gl_TessLevelOuter[0] = TessLevelOuter;
-  gl_TessLevelOuter[1] = TessLevelOuter;
-  gl_TessLevelOuter[2] = TessLevelOuter;
+  gl_TessLevelOuter[0] = TessLevelOuter1;
+  gl_TessLevelOuter[1] = TessLevelOuter2;
+  gl_TessLevelOuter[2] = TessLevelOuter3;
 
 
 //  tcNoise[0] = vNoise[0];
