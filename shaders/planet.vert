@@ -24,7 +24,7 @@ void main() {
 //  vec4 viewModelPosition = modelViewMatrix * vec4(inPosition, 1.0);
 
   vPosition = inPosition;
-  vNormal = mat3(projectionMatrix * modelViewMatrix) * inNormal;
+  vNormal = inNormal;
 
 //  vLightSourceCoord = textureMatrix * vec4(inPosition, 1.0); // Transform vertex to light source coo
 

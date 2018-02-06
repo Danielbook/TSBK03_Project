@@ -3,28 +3,29 @@ in vec3 gTriDistance;
 in vec3 gPatchDistance;
 in float gPrimitive;
 in vec3 gsNormal;
+in vec4 gsPosition;
 
 uniform vec3 lightPosition;
-out vec4 outColor;
+
 //out vec4 FragColor;
 
 //in vec3 vNormal;
 //in vec3 vPosition;
 //in float noise;
 //in vec4 lightSourceCoord;
-//
-//uniform float mountAmp;
-//uniform vec3 surfaceColor;
-//uniform vec3 snowColor;
-//uniform vec3 sandColor;
-//uniform float avgTemp;
-//uniform vec3 lightPosition;
-//uniform mat4 modelViewMatrix;
-//uniform mat4 viewMatrix;
+uniform float amplitude;
+uniform float frequency;
+uniform vec3 surfaceColor;
+uniform vec3 snowColor;
+uniform vec3 sandColor;
+uniform float avgTemp;
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+uniform mat4 viewMatrix;
 //uniform sampler2D textureUnit;
 //uniform float shade;
-//
 
+out vec4 outColor;
 
 vec3 mod289(vec3 x)
 {
@@ -133,44 +134,48 @@ void main() {
 //
 //  outColor = vec4(shade, shade, shade, 1.0);
 
+//  vec3 N = normalize(gsNormal);
+//  vec3 L = lightPosition - N;
+//  float df = abs(dot(N, L));
+//  vec3 color = vec3(0.04f, 0.04f, 0.04f) + df * vec3(0, 0.75, 0.75);
+//
+//  float d1 = min(min(gTriDistance.x, gTriDistance.y), gTriDistance.z);
+//  float d2 = min(min(gPatchDistance.x, gPatchDistance.y), gPatchDistance.z);
+//  color = amplify(d1, 40, -0.5) * amplify(d2, 60, -0.5) * color;
+//
+//  outColor = vec4(color, 1.0);
+
+  vec3 ambient, diffuse, finalColor;
+  float kd = 0.02, ka = 0.1;
+
   vec3 N = normalize(gsNormal);
-  vec3 L = lightPosition - N;
-  float df = abs(dot(N, L));
-  vec3 color = vec3(0.04f, 0.04f, 0.04f) + df * vec3(0, 0.75, 0.75);
+//  vec3 L = lightPosition - N;
 
-  float d1 = min(min(gTriDistance.x, gTriDistance.y), gTriDistance.z);
-  float d2 = min(min(gPatchDistance.x, gPatchDistance.y), gPatchDistance.z);
-  color = amplify(d1, 40, -0.5) * amplify(d2, 60, -0.5) * color;
+  vec4 lightPos = viewMatrix * vec4(lightPosition, 1.0);
+  vec3 lightVector = lightPos.xyz - gsPosition.xyz;
 
-  outColor = vec4(color, 1.0);
+  float df = abs(dot(N, lightVector));
 
-//  vec3 ambient, diffuse, finalColor;
-//  float kd = 0.02, ka = 0.1;
-//
-//  vec4 lightPos = viewMatrix * vec4(lightPosition, 1.0);
-//  vec3 lightVector = lightPos.xyz - vPosition;
-//
-//  float shoreLineTop = mountAmp/8.0+avgTemp-7.0;
-//
-//  shoreLineTop = max(-10, 0.01);
-//
-//  // Sandy shores
-//  finalColor=mix(sandColor, surfaceColor, smoothstep(0.0, shoreLineTop, noise));
-//
-//  // Snow on peaks
-//  finalColor=mix(finalColor, snowColor, smoothstep(avgTemp, avgTemp+7.0, noise));
-//
-//  // Low freq noise
-//  finalColor=finalColor-0.04*pnoise(1.0*vPosition, vec3(10.0));
-//
-//  ambient = ka * finalColor;
-//  diffuse = kd * finalColor * max(0.0, dot(lightVector, normalize(vNormal)));
-//
-//  finalColor = diffuse;
-//
-//  vec4 planetColor = vec4(finalColor, 1.0);
-//
-////  outColor = vec4(finalColor, 1.0);
+  float shoreLineTop = 0.2;
+
+  shoreLineTop = max(-10, 0.01);
+
+  float noise = amplitude * pnoise(frequency * gsNormal, vec3(20.0));
+
+  // Sandy shores
+  finalColor = mix(sandColor, surfaceColor, smoothstep(0.0, shoreLineTop, noise));
+
+  // Snow on peaks
+  finalColor = mix(finalColor, snowColor, smoothstep(avgTemp, avgTemp+7.0, noise));
+
+  // Low freq noise
+
+  ambient = ka * finalColor;
+  diffuse = kd * finalColor * max(0.0, df);
+
+  finalColor = diffuse + ambient;
+
+  outColor = vec4(finalColor, 1.0);
 //
 //  // Perform perspective division to get the actual texture position
 //  vec4 shadowCoordinateWdivide = lightSourceCoord / lightSourceCoord.w;

@@ -13,7 +13,7 @@ uniform float amplitude;
 uniform float frequency;
 
 out vec3 gsNormal;
-//out vec4 gsPosition;
+out vec4 gsPosition;
 //out vec3 gFacetNormal;
 out vec3 gPatchDistance;
 out vec3 gTriDistance;
@@ -144,28 +144,31 @@ void main()
 
   vec3 v1 = vec3(C - A);
   vec3 v2 = vec3(B - A);
-  vec3 n = normalMatrix * normalize(cross(v2, v1));
+  vec3 n =  normalize(cross(v2, v1));
 //  gFacetNormal = normalMatrix * normalize(cross(A, B));
 
   gPatchDistance = tePatchDistance[0];
   gTriDistance = vec3(1, 0, 0);
   gsNormal = n;
-  gl_Position = gl_in[0].gl_Position + vec4(normalize(gsNormal) * noise0, 1.0);
+  gl_Position = projectionMatrix * modelViewMatrix * gl_in[0].gl_Position + vec4(normalize(gsNormal) * noise0, 1.0);
 //  gl_Position = gl_in[0].gl_Position;
+  gsPosition = gl_Position;
   EmitVertex();
 
   gPatchDistance = tePatchDistance[1];
   gTriDistance = vec3(0, 1, 0);
   gsNormal = n;
-  gl_Position = gl_in[1].gl_Position + vec4(normalize(gsNormal) * noise1, 1.0);
+  gl_Position = projectionMatrix * modelViewMatrix * gl_in[1].gl_Position + vec4(normalize(gsNormal) * noise1, 1.0);
 //  gl_Position = gl_in[1].gl_Position;
+  gsPosition = gl_Position;
   EmitVertex();
 
   gPatchDistance = tePatchDistance[2];
   gTriDistance = vec3(0, 0, 1);
   gsNormal = n;
-  gl_Position = gl_in[2].gl_Position + vec4(normalize(gsNormal) * noise2, 1.0);
+  gl_Position = projectionMatrix * modelViewMatrix * gl_in[2].gl_Position + vec4(normalize(gsNormal) * noise2, 1.0);
 //  gl_Position = gl_in[2].gl_Position;
+  gsPosition = gl_Position;
   EmitVertex();
 
   EndPrimitive();

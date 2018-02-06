@@ -66,8 +66,8 @@ GLint TessLevelInner = 4;
 GLint TessLevelOuter1 = 4;
 GLint TessLevelOuter2 = 4;
 GLint TessLevelOuter3 = 4;
-GLfloat mountAmp = 0.0f;
-GLfloat mountFreq = 0.0f;
+GLfloat mountAmp = 1.0f;
+GLfloat mountFreq = 1.8f;
 
 int frame = 0, time, timebase = 0, deltaTime = 0, startTime = 0, nVertices = 0;
 
@@ -286,7 +286,7 @@ void drawObjects(GLuint shader)
   vec3 snowColor = {0.8, 0.9, 1.0};
   vec3 sandColor = {0.95, 0.67, 0.26};
 
-  planetTransl = Mult(Rz(0), T(0, 0, 0)); // Planet translation
+  planetTransl = Mult(Rz(0.0001*time), T(0, 0, 0)); // Planet translation
   planetRot = Mult(Rz(0), S(1.0, 2.0, 2.0)); // Planet Rotation
   planetTransform = Mult(planetTransl, planetRot);
 
