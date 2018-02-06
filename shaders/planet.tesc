@@ -1,13 +1,13 @@
 #version 410
 
 layout(vertices = 3) out;
-in vec4 vPosition[]; // From vertex shader
+in vec3 vPosition[]; // From vertex shader
 in vec3 vNormal[];
 //in vec4 vLightSourceCoord[4];
 //in vec3 vNormal[];
 //in float vNoise[];
 
-out vec4 tcPosition[]; // Output of TC
+out vec3 tcPosition[]; // Output of TC
 out vec3 tcNormal[]; // Output of TC
 //out vec3 tcLightSourceCoord[];
 //out float tcNoise[];

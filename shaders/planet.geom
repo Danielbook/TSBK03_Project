@@ -2,19 +2,21 @@
 layout(triangles) in;
 layout(triangle_strip, max_vertices = 3) out;
 
-//in vec3 tePosition[3];
-//in vec3 tePatchDistance[3];
+in vec3 tePosition[3];
+in vec3 tePatchDistance[3];
 in vec3 teNormal[3];
 
 uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
 uniform mat3 normalMatrix;
 uniform float amplitude;
 uniform float frequency;
 
 out vec3 gsNormal;
+//out vec4 gsPosition;
 //out vec3 gFacetNormal;
-//out vec3 gPatchDistance;
-//out vec3 gTriDistance;
+out vec3 gPatchDistance;
+out vec3 gTriDistance;
 
 // Move displacement to this file!
 vec3 mod289(vec3 x)
@@ -113,46 +115,57 @@ float pnoise(vec3 P, vec3 rep)
 
 void main()
 {
-  vec4 modpos[3];
+  vec3 modpos[3];
   float t;
 
-
   // Recalc normals!
-  modpos[0] = gl_in[0].gl_Position + amplitude * pnoise(gl_in[0].gl_Position.xyz, vec3(20.0)) * vec4(teNormal[0], 1.0);
-  modpos[1] = gl_in[1].gl_Position + amplitude * pnoise(gl_in[1].gl_Position.xyz, vec3(20.0)) * vec4(teNormal[1], 1.0);
-  modpos[2] = gl_in[2].gl_Position + amplitude * pnoise(gl_in[2].gl_Position.xyz, vec3(20.0)) * vec4(teNormal[2], 1.0);
+//  modpos[0] = gl_in[0].gl_Position + amplitude * pnoise(gl_in[0].gl_Position.xyz, vec3(20.0));
+//  modpos[1] = gl_in[1].gl_Position + amplitude * pnoise(gl_in[1].gl_Position.xyz, vec3(20.0));
+//  modpos[2] = gl_in[2].gl_Position + amplitude * pnoise(gl_in[2].gl_Position.xyz, vec3(20.0));
+
+//  modpos[0] = tePosition[0] + amplitude * pnoise(tePosition, vec3(20.0));
+//  modpos[1] = tePosition[1] + amplitude * pnoise(tePosition, vec3(20.0));
+//  modpos[2] = tePosition[2] + amplitude * pnoise(tePosition, vec3(20.0));
 
 //  modpos[0] = gl_in[0].gl_Position;
 //  modpos[1] = gl_in[1].gl_Position;
 //  modpos[2] = gl_in[2].gl_Position;
 
-  vec3 v1 = vec3(modpos[1] - modpos[0]);
-  vec3 v2 = vec3(modpos[2] - modpos[0]);
-  vec3 n = normalMatrix * normalize(cross(v2, v1));
+//  vec3 v1 = vec3(modpos[1] - modpos[0]);
+//  vec3 v2 = vec3(modpos[2] - modpos[0]);
+//  vec3 n = normalMatrix * normalize(cross(v2, v1));
+  float noise0 = amplitude * pnoise(frequency * gl_in[0].gl_Position.xyz, vec3(20.0));
+  float noise1 = amplitude * pnoise(frequency * gl_in[1].gl_Position.xyz, vec3(20.0));
+  float noise2 = amplitude * pnoise(frequency * gl_in[2].gl_Position.xyz, vec3(20.0));
 
-//  vec3 A = tePosition[2] - tePosition[0];
-//  vec3 B = tePosition[1] - tePosition[0];
+  vec4 A = gl_in[0].gl_Position + noise0 * vec4(teNormal[0], 1.0);
+  vec4 B = gl_in[1].gl_Position + noise1 * vec4(teNormal[1], 1.0);
+  vec4 C = gl_in[2].gl_Position + noise2 * vec4(teNormal[2], 1.0);
+
+  vec3 v1 = vec3(C - A);
+  vec3 v2 = vec3(B - A);
+  gsNormal = normalMatrix * normalize(cross(v2, v1));
 //  gFacetNormal = normalMatrix * normalize(cross(A, B));
 
-//  gPatchDistance = tePatchDistance[0];
-//  gTriDistance = vec3(1, 0, 0);
-  gl_Position = gl_in[0].gl_Position + amplitude * pnoise(gl_in[0].gl_Position.xyz, vec3(20.0)) * vec4(teNormal[0], 1.0);
+  gPatchDistance = tePatchDistance[0];
+  gTriDistance = vec3(1, 0, 0);
+  gl_Position = gl_in[0].gl_Position + vec4(noise0 * gsNormal, 1.0);
+//  gsNormal = n;
 //  gl_Position = gl_in[0].gl_Position;
-  gsNormal = n;
   EmitVertex();
 
-//  gPatchDistance = tePatchDistance[1];
-//  gTriDistance = vec3(0, 1, 0);
-  gl_Position = gl_in[1].gl_Position + amplitude * pnoise(gl_in[1].gl_Position.xyz, vec3(20.0)) * vec4(teNormal[1], 1.0);
+  gPatchDistance = tePatchDistance[1];
+  gTriDistance = vec3(0, 1, 0);
+  gl_Position = gl_in[1].gl_Position + vec4(noise1 * gsNormal, 1.0);
+//  gsNormal = n;
 //  gl_Position = gl_in[1].gl_Position;
-  gsNormal = n;
   EmitVertex();
 
-//  gPatchDistance = tePatchDistance[2];
-//  gTriDistance = vec3(0, 0, 1);
-  gl_Position = gl_in[2].gl_Position + amplitude * pnoise(gl_in[2].gl_Position.xyz, vec3(20.0)) * vec4(teNormal[2], 1.0);
+  gPatchDistance = tePatchDistance[2];
+  gTriDistance = vec3(0, 0, 1);
+  gl_Position = gl_in[2].gl_Position + vec4(noise2 * gsNormal, 1.0);
+//  gsNormal = n;
 //  gl_Position = gl_in[2].gl_Position;
-  gsNormal = n;
   EmitVertex();
 
   EndPrimitive();

@@ -1,5 +1,6 @@
 #version 410
-in vec3 inPosition;
+//in vec3 inPosition;
+in vec4 inPosition;
 in vec3 inNormal;
 
 uniform mat4 modelViewMatrix;
@@ -9,7 +10,8 @@ uniform mat4 textureMatrix;
 uniform mat4 viewMatrix;
 
 out vec3 vNormal;
-out vec4 vPosition;
+//out vec4 vPosition;
+out vec3 vPosition;
 //out float vNoise;
 //out vec4 vLightSourceCoord;
 
@@ -21,8 +23,8 @@ void main() {
 //  vec4 viewModelPosition = modelViewMatrix * vec4(pos, 1.0);
 //  vec4 viewModelPosition = modelViewMatrix * vec4(inPosition, 1.0);
 
-  vPosition = projectionMatrix * viewMatrix * vec4(inPosition, 1.0);
-  vNormal = mat3(projectionMatrix * viewMatrix) * inNormal;
+  vPosition = inPosition.xyz;
+  vNormal = mat3(projectionMatrix * modelViewMatrix) * inNormal;
 
 //  vLightSourceCoord = textureMatrix * vec4(inPosition, 1.0); // Transform vertex to light source coo
 

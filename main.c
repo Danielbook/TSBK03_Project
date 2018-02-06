@@ -62,8 +62,8 @@ GLuint texture;
 
 GLfloat a;
 
-GLint TessLevelInner = 1;
-GLint TessLevelOuter = 1;
+GLint TessLevelInner = 4;
+GLint TessLevelOuter = 4;
 GLfloat mountAmp = 0.0f;
 GLfloat mountFreq = 0.0f;
 
@@ -258,24 +258,24 @@ void drawObjects(GLuint shader)
 //  glUniform1f(glGetUniformLocation(projTexShaderId, "shade"), 0.9); // Brighter objects
 
   // SUN
-  const float sunAmp = 0.1;
-  const float sunFreq = 80;
-  mv2 = Mult(modelViewMatrix, T(0, 0, 0));
-  mat3 sunNormalMatrix = InverseTranspose(T(0, 0, 0));
-//  tx2 = Mult(textureMatrix, T(0, 0, 0));
-
-  glUseProgram(sunShaderId);
-  glUniform1f(glGetUniformLocation(sunShaderId, "amplitude"), sunAmp);
-  glUniform1f(glGetUniformLocation(sunShaderId, "frequency"), sunFreq);
-  glUniform1f(glGetUniformLocation(sunShaderId, "time"), time);
-  glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
-  glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "modelViewMatrix"), 1, GL_TRUE, mv2.m);
-  glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "normalMatrix"), 1, GL_TRUE, sunNormalMatrix.m);
-//  glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "textureMatrix"), 1, GL_TRUE, tx2.m);
-
-//  drawIco();
-
-  DrawModel(sphere, sunShaderId, "inPosition", "inNormal", NULL);
+//  const float sunAmp = 0.1;
+//  const float sunFreq = 80;
+//  mv2 = Mult(modelViewMatrix, T(0, 0, 0));
+//  mat3 sunNormalMatrix = InverseTranspose(T(0, 0, 0));
+////  tx2 = Mult(textureMatrix, T(0, 0, 0));
+//
+//  glUseProgram(sunShaderId);
+//  glUniform1f(glGetUniformLocation(sunShaderId, "amplitude"), sunAmp);
+//  glUniform1f(glGetUniformLocation(sunShaderId, "frequency"), sunFreq);
+//  glUniform1f(glGetUniformLocation(sunShaderId, "time"), time);
+//  glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+//  glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "modelViewMatrix"), 1, GL_TRUE, mv2.m);
+//  glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "normalMatrix"), 1, GL_TRUE, sunNormalMatrix.m);
+////  glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "textureMatrix"), 1, GL_TRUE, tx2.m);
+//
+////  drawIco();
+//
+//  DrawModel(sphere, sunShaderId, "inPosition", "inNormal", NULL);
 
   // PLANET
   const float avgTemp = 7.0;
@@ -318,24 +318,24 @@ void drawObjects(GLuint shader)
 
   
   // Ocean
-  vec3 oceanColor = {0, 11 / 255, 255 / 255};
-  oceanTransform = Mult(planetTransform, S(0.97, 0.97, 0.97)); // Planet pos + rotation
-  mv2 = Mult(modelViewMatrix, oceanTransform);
-  tx2 = Mult(textureMatrix, oceanTransform);
-  mat3 oceanNormalMatrix = InverseTranspose(mv2);
-
-  glUseProgram(oceanShaderId);
-  glUniform1f(glGetUniformLocation(oceanShaderId, "time"), time);
-  glUniform3f(glGetUniformLocation(oceanShaderId, "lightPosition"), p_light.x, p_light.y, p_light.z);
-  glUniform1f(glGetUniformLocation(oceanShaderId, "avgTemp"), avgTemp);
-  glUniform3f(glGetUniformLocation(oceanShaderId, "oceanColor"), oceanColor.x, oceanColor.y, oceanColor.z);
-  glUniformMatrix3fv(glGetUniformLocation(oceanShaderId, "normalMatrix"), 1, GL_TRUE, oceanNormalMatrix.m);
-  glUniformMatrix4fv(glGetUniformLocation(oceanShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
-  glUniformMatrix4fv(glGetUniformLocation(oceanShaderId, "viewMatrix"), 1, GL_TRUE, modelViewMatrix.m);
-  glUniformMatrix4fv(glGetUniformLocation(oceanShaderId, "modelViewMatrix"), 1, GL_TRUE, mv2.m);
-  glUniformMatrix4fv(glGetUniformLocation(oceanShaderId, "textureMatrix"), 1, GL_TRUE, tx2.m);
-
-  DrawModel(sphere, oceanShaderId, "inPosition", "inNormal", NULL);
+//  vec3 oceanColor = {0, 11 / 255, 255 / 255};
+//  oceanTransform = Mult(planetTransform, S(0.97, 0.97, 0.97)); // Planet pos + rotation
+//  mv2 = Mult(modelViewMatrix, oceanTransform);
+//  tx2 = Mult(textureMatrix, oceanTransform);
+//  mat3 oceanNormalMatrix = InverseTranspose(mv2);
+//
+//  glUseProgram(oceanShaderId);
+//  glUniform1f(glGetUniformLocation(oceanShaderId, "time"), time);
+//  glUniform3f(glGetUniformLocation(oceanShaderId, "lightPosition"), p_light.x, p_light.y, p_light.z);
+//  glUniform1f(glGetUniformLocation(oceanShaderId, "avgTemp"), avgTemp);
+//  glUniform3f(glGetUniformLocation(oceanShaderId, "oceanColor"), oceanColor.x, oceanColor.y, oceanColor.z);
+//  glUniformMatrix3fv(glGetUniformLocation(oceanShaderId, "normalMatrix"), 1, GL_TRUE, oceanNormalMatrix.m);
+//  glUniformMatrix4fv(glGetUniformLocation(oceanShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+//  glUniformMatrix4fv(glGetUniformLocation(oceanShaderId, "viewMatrix"), 1, GL_TRUE, modelViewMatrix.m);
+//  glUniformMatrix4fv(glGetUniformLocation(oceanShaderId, "modelViewMatrix"), 1, GL_TRUE, mv2.m);
+//  glUniformMatrix4fv(glGetUniformLocation(oceanShaderId, "textureMatrix"), 1, GL_TRUE, tx2.m);
+//
+//  DrawModel(sphere, oceanShaderId, "inPosition", "inNormal", NULL);
 
   // Atmosphere
 //  atmosphereTransform = Mult(planetTransform, S(1.15, 1.15, 1.15)); // Planet pos + rotation
@@ -467,20 +467,26 @@ void processNormalKeys(unsigned char key, int x, int y)
   switch(key) {
     case 'w': {
       TessLevelInner += 1;
+      printf("TessLevelInner: %i\n", TessLevelInner);
       break;
     }
     case 's': {
-      if(TessLevelInner > 1)
+      if(TessLevelInner > 1) {
         TessLevelInner -= 1;
+        printf("TessLevelInner: %i\n", TessLevelInner);
+      }
       break;
     }
     case 'd': {
       TessLevelOuter += 1;
+      printf("TessLevelOuter: %i\n", TessLevelOuter);
       break;
     }
     case 'a': {
-      if(TessLevelOuter > 1) {}
+      if(TessLevelOuter > 1) {
         TessLevelOuter -= 1;
+        printf("TessLevelOuter: %i\n", TessLevelOuter);
+      }
       break;
     }
     case 'i': {
@@ -507,6 +513,7 @@ void processNormalKeys(unsigned char key, int x, int y)
       }
       break;
     }
+    default:break;
   }
 }
 
