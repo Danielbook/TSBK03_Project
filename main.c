@@ -52,7 +52,7 @@ Point3D l_light = {1, 0, 0};
 //Point3D l_light = {0, 0, -1};
 
 //Camera position
-Point3D p_camera = {0, 0, 15};
+Point3D p_camera = {0, 5, 15};
 
 //Camera lookAt
 Point3D l_camera = {0, 0, 0};
@@ -259,7 +259,7 @@ void drawObjects(GLuint shader)
 //
 //  glUniform1f(glGetUniformLocation(projTexShaderId, "shade"), 0.9); // Brighter objects
 
-  // SUN
+////   SUN
 //  const float sunAmp = 0.1;
 //  const float sunFreq = 80;
 //  mv2 = Mult(modelViewMatrix, T(0, 0, 0));
@@ -275,9 +275,9 @@ void drawObjects(GLuint shader)
 //  glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "normalMatrix"), 1, GL_TRUE, sunNormalMatrix.m);
 ////  glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "textureMatrix"), 1, GL_TRUE, tx2.m);
 //
-////  drawIco();
+//  drawIco();
 //
-//  DrawModel(sphere, sunShaderId, "inPosition", "inNormal", NULL);
+////  DrawModel(sphere, sunShaderId, "inPosition", "inNormal", NULL);
 
   // PLANET
   const float avgTemp = 7.0;
@@ -286,12 +286,12 @@ void drawObjects(GLuint shader)
   vec3 snowColor = {0.8, 0.9, 1.0};
   vec3 sandColor = {0.95, 0.67, 0.26};
 
-  planetTransl = Mult(Rz(0.0001*time), T(0, 0, 0)); // Planet translation
-  planetRot = Mult(Rz(0), S(1.0, 2.0, 2.0)); // Planet Rotation
-  planetTransform = Mult(planetTransl, planetRot);
+  planetTransl = Mult(Ry(time*0.001), T(3, 0, 0)); // Planet translation
+  planetRot = Mult(Ry(time*0.002), S(1.0, 1.0, 1.0)); // Planet Rotation
+  planetTransform = Mult(planetTransl, planetRot); // Planet transform
 
-  mv2 = Mult(modelViewMatrix, planetTransl);
-  tx2 = Mult(textureMatrix, planetTransl);
+  mv2 = Mult(modelViewMatrix, planetTransform);
+  tx2 = Mult(textureMatrix, planetTransform);
   mat3 planetNormalMatrix = InverseTranspose(mv2);
 
   glUseProgram(planetShaderId);
@@ -318,10 +318,9 @@ void drawObjects(GLuint shader)
 
   drawIco();
 
-  glUniform1f(glGetUniformLocation(planetShaderId, "shade"), 0.9); // Brighter objects
+//  glUniform1f(glGetUniformLocation(planetShaderId, "shade"), 0.9); // Brighter objects
 
-  
-  // Ocean
+//  // Ocean
 //  vec3 oceanColor = {0, 11 / 255, 255 / 255};
 //  oceanTransform = Mult(planetTransform, S(0.97, 0.97, 0.97)); // Planet pos + rotation
 //  mv2 = Mult(modelViewMatrix, oceanTransform);
@@ -341,7 +340,7 @@ void drawObjects(GLuint shader)
 //
 //  DrawModel(sphere, oceanShaderId, "inPosition", "inNormal", NULL);
 
-  // Atmosphere
+//  // Atmosphere
 //  atmosphereTransform = Mult(planetTransform, S(1.15, 1.15, 1.15)); // Planet pos + rotation
 //  mv2 = Mult(modelViewMatrix, atmosphereTransform);
 //  tx2 = Mult(textureMatrix, atmosphereTransform);
@@ -358,14 +357,14 @@ void drawObjects(GLuint shader)
 //  glUniformMatrix4fv(glGetUniformLocation(atmosphereShaderId, "textureMatrix"), 1, GL_TRUE, tx2.m);
 //
 //  DrawModel(ico, atmosphereShaderId, "inPosition", "inNormal", NULL);
-
-  // Moon
+//
+//  // Moon
 //  vec3 moonColor = {0, 128 / 255, 255 / 255};
 //  const float moonMountFreq = 0.04;
 //  const float moonMountAmp = 0.09;
 //
-//  moonTransl = Mult(Mult(Rz(0), Ry(time*0.001)), T(-180, 0, 0)); // Translation
-//  moonRot = Mult(Ry(0), S(0.4, 0.4, 0.4)); // Rotation
+//  moonTransl = Mult(Mult(Rz(0), Ry(time*0.001)), T(-4, 0, 0)); // Translation
+//  moonRot = Mult(Ry(0), S(0.01, 0.01, 0.01)); // Rotation
 //  moonTransform = Mult(planetTransl, Mult(moonTransl, moonRot));
 //
 //  mv2 = Mult(modelViewMatrix, moonTransform);

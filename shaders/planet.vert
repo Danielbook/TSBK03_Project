@@ -1,32 +1,21 @@
-#version 410
-//in vec3 inPosition;
+#version 410 core
+
 in vec3 inPosition;
 in vec3 inNormal;
 
 uniform mat4 modelViewMatrix;
-uniform mat3 normalMatrix;
 uniform mat4 projectionMatrix;
 uniform mat4 textureMatrix;
-uniform mat4 viewMatrix;
+uniform mat3 normalMatrix;
 
-out vec3 vNormal;
+out vec3 vNormal; // Output of VS
 out vec3 vPosition;
 
 //out float vNoise;
-//out vec4 vLightSourceCoord;
+out vec4 vLightSourceCoord;
 
 void main() {
-//  float vNoise = amplitude*pnoise(frequency*inPosition, vec3(20.0));
-
-//  vec3 pos = inPosition + vNoise * inNormal;
-
-//  vec4 viewModelPosition = modelViewMatrix * vec4(pos, 1.0);
-//  vec4 viewModelPosition = modelViewMatrix * vec4(inPosition, 1.0);
-
   vPosition = inPosition;
   vNormal = inNormal;
-
-//  vLightSourceCoord = textureMatrix * vec4(inPosition, 1.0); // Transform vertex to light source coo
-
-//  vNormal = normalize(normalMatrix * inNormal);
+  vLightSourceCoord = textureMatrix * vec4(inPosition, 1.0); // Transform vertex to light source coords
 }
