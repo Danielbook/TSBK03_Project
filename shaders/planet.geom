@@ -18,7 +18,6 @@ out vec3 gsNormal;
 out vec3 gPatchDistance;
 out vec3 gTriDistance;
 
-// Move displacement to this file!
 vec3 mod289(vec3 x)
 {
   return x - floor(x * (1.0 / 289.0)) * 289.0;
@@ -139,9 +138,9 @@ void main()
   float noise1 = amplitude * pnoise(frequency * tePosition[1], vec3(20.0));
   float noise2 = amplitude * pnoise(frequency * tePosition[2], vec3(20.0));
 
-  vec4 A = gl_in[0].gl_Position + vec4(teNormal[0] * noise0, 1.0);
-  vec4 B = gl_in[1].gl_Position + vec4(teNormal[1] * noise1, 1.0);
-  vec4 C = gl_in[2].gl_Position + vec4(teNormal[2] * noise2, 1.0);
+  vec4 A = gl_in[0].gl_Position + noise0 * vec4(normalize(teNormal[0]), 1.0);
+  vec4 B = gl_in[1].gl_Position + noise1 * vec4(normalize(teNormal[1]), 1.0);
+  vec4 C = gl_in[2].gl_Position + noise2 * vec4(normalize(teNormal[2]), 1.0);
 
   vec3 v1 = vec3(C - A);
   vec3 v2 = vec3(B - A);
@@ -151,21 +150,21 @@ void main()
   gPatchDistance = tePatchDistance[0];
   gTriDistance = vec3(1, 0, 0);
   gsNormal = n;
-  gl_Position = gl_in[0].gl_Position + vec4(gsNormal * noise0, 1.0);
+  gl_Position = gl_in[0].gl_Position + vec4(normalize(gsNormal) * noise0, 1.0);
 //  gl_Position = gl_in[0].gl_Position;
   EmitVertex();
 
   gPatchDistance = tePatchDistance[1];
   gTriDistance = vec3(0, 1, 0);
   gsNormal = n;
-  gl_Position = gl_in[1].gl_Position + vec4(gsNormal * noise1, 1.0);
+  gl_Position = gl_in[1].gl_Position + vec4(normalize(gsNormal) * noise1, 1.0);
 //  gl_Position = gl_in[1].gl_Position;
   EmitVertex();
 
   gPatchDistance = tePatchDistance[2];
   gTriDistance = vec3(0, 0, 1);
   gsNormal = n;
-  gl_Position = gl_in[2].gl_Position + vec4(gsNormal * noise2, 1.0);
+  gl_Position = gl_in[2].gl_Position + vec4(normalize(gsNormal) * noise2, 1.0);
 //  gl_Position = gl_in[2].gl_Position;
   EmitVertex();
 
