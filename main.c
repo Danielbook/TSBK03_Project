@@ -52,7 +52,7 @@ Point3D l_light = {1, 0, 0};
 //Point3D l_light = {0, 0, -1};
 
 //Camera position
-Point3D p_camera = {0, 5, 15};
+Point3D p_camera = {0, 25, 25};
 
 //Camera lookAt
 Point3D l_camera = {0, 0, 0};
@@ -219,16 +219,18 @@ void drawIco(void)
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(icoFaces), icoFaces, GL_STATIC_DRAW);
 
   // Render the scene:
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//  glClear(GL_DEPTH_BUFFER_BIT);
   glPatchParameteri(GL_PATCH_VERTICES, 3);
   glDrawElements(GL_PATCHES, icoIndexCount, GL_UNSIGNED_INT, 0);
+  glBindVertexArray(NULL);
 
-  glBindVertexArray(0);
 }
 
 void drawObjects(GLuint shader)
 {
   mat4 planetTransl, planetRot, planetTransform;
+  mat4 sunTransl, sunRot, sunTransform;
   mat4 oceanTransform;
   mat4 atmosphereTransform;
   mat4 moonTransl, moonRot, moonTransform;
@@ -259,36 +261,40 @@ void drawObjects(GLuint shader)
 //
 //  glUniform1f(glGetUniformLocation(projTexShaderId, "shade"), 0.9); // Brighter objects
 
-////   SUN
-//  const float sunAmp = 0.1;
-//  const float sunFreq = 80;
-//  mv2 = Mult(modelViewMatrix, T(0, 0, 0));
-//  mat3 sunNormalMatrix = InverseTranspose(T(0, 0, 0));
-////  tx2 = Mult(textureMatrix, T(0, 0, 0));
-//
-//  glUseProgram(sunShaderId);
-//  glUniform1f(glGetUniformLocation(sunShaderId, "amplitude"), sunAmp);
-//  glUniform1f(glGetUniformLocation(sunShaderId, "frequency"), sunFreq);
-//  glUniform1f(glGetUniformLocation(sunShaderId, "time"), time);
-//  glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
-//  glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "modelViewMatrix"), 1, GL_TRUE, mv2.m);
-//  glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "normalMatrix"), 1, GL_TRUE, sunNormalMatrix.m);
-////  glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "textureMatrix"), 1, GL_TRUE, tx2.m);
-//
-//  drawIco();
-//
-////  DrawModel(sphere, sunShaderId, "inPosition", "inNormal", NULL);
+  ////   SUN
+  const float sunAmp = 0.09;
+  const float sunFreq = 0.04;
 
-  // PLANET
+  sunTransl = Mult(Ry(0), T(0, 0, 0));
+  sunRot = Mult(Ry(time*0.0002), S(0.01, 0.01, 0.01));
+  sunTransform = Mult(sunTransl, sunRot);
+
+  mv2 = Mult(modelViewMatrix, sunTransform);
+  tx2 = Mult(textureMatrix, sunTransform);
+  mat3 sunNormalMatrix = InverseTranspose(mv2);
+
+  glUseProgram(sunShaderId);
+  glUniform1f(glGetUniformLocation(sunShaderId, "amplitude"), sunAmp);
+  glUniform1f(glGetUniformLocation(sunShaderId, "frequency"), sunFreq);
+  glUniform1f(glGetUniformLocation(sunShaderId, "time"), time);
+  glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+  glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "modelViewMatrix"), 1, GL_TRUE, mv2.m);
+  glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "normalMatrix"), 1, GL_TRUE, sunNormalMatrix.m);
+//  glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "textureMatrix"), 1, GL_TRUE, tx2.m);
+
+//  drawIco();
+  DrawModel(sphere, sunShaderId, "inPosition", "inNormal", NULL);
+
+  //// PLANET
   const float avgTemp = 7.0;
 
   vec3 surfaceColor = {0.0, 0.4, 0.1};
   vec3 snowColor = {0.8, 0.9, 1.0};
   vec3 sandColor = {0.95, 0.67, 0.26};
 
-  planetTransl = Mult(Ry(time*0.001), T(3, 0, 0)); // Planet translation
+  planetTransl = Mult(Ry(time*0.0001), T(30, 0, 0)); // Planet translation
   planetRot = Mult(Ry(time*0.002), S(1.0, 1.0, 1.0)); // Planet Rotation
-  planetTransform = Mult(planetTransl, planetRot); // Planet transform
+  planetTransform = Mult(sunTransl, Mult(planetTransl, planetRot)); // Planet transform
 
   mv2 = Mult(modelViewMatrix, planetTransform);
   tx2 = Mult(textureMatrix, planetTransform);
@@ -308,17 +314,58 @@ void drawObjects(GLuint shader)
   glUniform3f(glGetUniformLocation(planetShaderId, "surfaceColor"), surfaceColor.x, surfaceColor.y, surfaceColor.z);
   glUniform3f(glGetUniformLocation(planetShaderId, "snowColor"), snowColor.x, snowColor.y, snowColor.z);
   glUniform3f(glGetUniformLocation(planetShaderId, "sandColor"), sandColor.x, sandColor.y, sandColor.z);
-
   glUniformMatrix4fv(glGetUniformLocation(planetShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
   glUniformMatrix3fv(glGetUniformLocation(planetShaderId, "normalMatrix"), 1, GL_TRUE, planetNormalMatrix.m);
   glUniformMatrix4fv(glGetUniformLocation(planetShaderId, "viewMatrix"), 1, GL_TRUE, modelViewMatrix.m);
   glUniformMatrix4fv(glGetUniformLocation(planetShaderId, "modelViewMatrix"), 1, GL_TRUE, mv2.m);
   glUniformMatrix4fv(glGetUniformLocation(planetShaderId, "textureMatrix"), 1, GL_TRUE, tx2.m);
-//  DrawModel(ico, planetShaderId, "inPosition", "inNormal", NULL);
 
   drawIco();
 
-//  glUniform1f(glGetUniformLocation(planetShaderId, "shade"), 0.9); // Brighter objects
+  //// Atmosphere
+  atmosphereTransform = Mult(planetTransform, S(0.015, 0.015, 0.015)); // Planet pos + rotation
+  mv2 = Mult(modelViewMatrix, atmosphereTransform);
+  tx2 = Mult(textureMatrix, atmosphereTransform);
+  mat3 atmosphereNormalMatrix = InverseTranspose(mv2);
+
+  glUseProgram(atmosphereShaderId);
+  glUniform1f(glGetUniformLocation(atmosphereShaderId, "time"), time);
+  glUniform1f(glGetUniformLocation(atmosphereShaderId, "atmosphereOpacity"), 0.2);
+  glUniform3f(glGetUniformLocation(atmosphereShaderId, "lightPosition"), p_light.x, p_light.y, p_light.z);
+  glUniformMatrix3fv(glGetUniformLocation(atmosphereShaderId, "normalMatrix"), 1, GL_TRUE, atmosphereNormalMatrix.m);
+  glUniformMatrix4fv(glGetUniformLocation(atmosphereShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+  glUniformMatrix4fv(glGetUniformLocation(atmosphereShaderId, "viewMatrix"), 1, GL_TRUE, modelViewMatrix.m);
+  glUniformMatrix4fv(glGetUniformLocation(atmosphereShaderId, "modelViewMatrix"), 1, GL_TRUE, mv2.m);
+  glUniformMatrix4fv(glGetUniformLocation(atmosphereShaderId, "textureMatrix"), 1, GL_TRUE, tx2.m);
+
+  DrawModel(sphere, atmosphereShaderId, "inPosition", "inNormal", NULL);
+
+  // Moon
+  vec3 moonColor = {0, 128 / 255, 255 / 255};
+  const float moonMountFreq = 0.04;
+  const float moonMountAmp = 0.09;
+
+  moonTransl = Mult(Mult(Rz(0), Ry(time*0.001)), T(-4, 0, 0)); // Translation
+  moonRot = Mult(Ry(0), S(0.01, 0.01, 0.01)); // Rotation
+  moonTransform = Mult(planetTransl, Mult(moonTransl, moonRot));
+
+  mv2 = Mult(modelViewMatrix, moonTransform);
+  tx2 = Mult(textureMatrix, moonTransform);
+
+  glUseProgram(moonShaderId);
+  glUniform1f(glGetUniformLocation(moonShaderId, "time"), time);
+  glUniform1f(glGetUniformLocation(moonShaderId, "moonMountFreq"), moonMountFreq);
+  glUniform1f(glGetUniformLocation(moonShaderId, "moonMountAmp"), moonMountAmp);
+  glUniform3f(glGetUniformLocation(moonShaderId, "lightPosition"), p_light.x, p_light.y, p_light.z);
+  glUniform3f(glGetUniformLocation(moonShaderId, "moonColor"), moonColor.x, moonColor.y, moonColor.z);
+  glUniformMatrix4fv(glGetUniformLocation(moonShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+  glUniformMatrix4fv(glGetUniformLocation(moonShaderId, "viewMatrix"), 1, GL_TRUE, modelViewMatrix.m);
+  glUniformMatrix4fv(glGetUniformLocation(moonShaderId, "modelViewMatrix"), 1, GL_TRUE, mv2.m);
+  glUniformMatrix4fv(glGetUniformLocation(moonShaderId, "textureMatrix"), 1, GL_TRUE, tx2.m);
+
+  DrawModel(sphere, moonShaderId, "inPosition", "inNormal", NULL);
+
+  //  glUniform1f(glGetUniformLocation(planetShaderId, "shade"), 0.9); // Brighter objects
 
 //  // Ocean
 //  vec3 oceanColor = {0, 11 / 255, 255 / 255};
@@ -339,49 +386,6 @@ void drawObjects(GLuint shader)
 //  glUniformMatrix4fv(glGetUniformLocation(oceanShaderId, "textureMatrix"), 1, GL_TRUE, tx2.m);
 //
 //  DrawModel(sphere, oceanShaderId, "inPosition", "inNormal", NULL);
-
-//  // Atmosphere
-//  atmosphereTransform = Mult(planetTransform, S(1.15, 1.15, 1.15)); // Planet pos + rotation
-//  mv2 = Mult(modelViewMatrix, atmosphereTransform);
-//  tx2 = Mult(textureMatrix, atmosphereTransform);
-//  mat3 atmosphereNormalMatrix = InverseTranspose(mv2);
-//
-//  glUseProgram(atmosphereShaderId);
-//  glUniform1f(glGetUniformLocation(atmosphereShaderId, "time"), time);
-//  glUniform1f(glGetUniformLocation(atmosphereShaderId, "atmosphereOpacity"), 0.2);
-//  glUniform3f(glGetUniformLocation(atmosphereShaderId, "lightPosition"), p_light.x, p_light.y, p_light.z);
-//  glUniformMatrix3fv(glGetUniformLocation(atmosphereShaderId, "normalMatrix"), 1, GL_TRUE, atmosphereNormalMatrix.m);
-//  glUniformMatrix4fv(glGetUniformLocation(atmosphereShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
-//  glUniformMatrix4fv(glGetUniformLocation(atmosphereShaderId, "viewMatrix"), 1, GL_TRUE, modelViewMatrix.m);
-//  glUniformMatrix4fv(glGetUniformLocation(atmosphereShaderId, "modelViewMatrix"), 1, GL_TRUE, mv2.m);
-//  glUniformMatrix4fv(glGetUniformLocation(atmosphereShaderId, "textureMatrix"), 1, GL_TRUE, tx2.m);
-//
-//  DrawModel(ico, atmosphereShaderId, "inPosition", "inNormal", NULL);
-//
-//  // Moon
-//  vec3 moonColor = {0, 128 / 255, 255 / 255};
-//  const float moonMountFreq = 0.04;
-//  const float moonMountAmp = 0.09;
-//
-//  moonTransl = Mult(Mult(Rz(0), Ry(time*0.001)), T(-4, 0, 0)); // Translation
-//  moonRot = Mult(Ry(0), S(0.01, 0.01, 0.01)); // Rotation
-//  moonTransform = Mult(planetTransl, Mult(moonTransl, moonRot));
-//
-//  mv2 = Mult(modelViewMatrix, moonTransform);
-//  tx2 = Mult(textureMatrix, moonTransform);
-//
-//  glUseProgram(moonShaderId);
-//  glUniform1f(glGetUniformLocation(moonShaderId, "time"), time);
-//  glUniform1f(glGetUniformLocation(moonShaderId, "moonMountFreq"), moonMountFreq);
-//  glUniform1f(glGetUniformLocation(moonShaderId, "moonMountAmp"), moonMountAmp);
-//  glUniform3f(glGetUniformLocation(moonShaderId, "lightPosition"), p_light.x, p_light.y, p_light.z);
-//  glUniform3f(glGetUniformLocation(moonShaderId, "moonColor"), moonColor.x, moonColor.y, moonColor.z);
-//  glUniformMatrix4fv(glGetUniformLocation(moonShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
-//  glUniformMatrix4fv(glGetUniformLocation(moonShaderId, "viewMatrix"), 1, GL_TRUE, modelViewMatrix.m);
-//  glUniformMatrix4fv(glGetUniformLocation(moonShaderId, "modelViewMatrix"), 1, GL_TRUE, mv2.m);
-//  glUniformMatrix4fv(glGetUniformLocation(moonShaderId, "textureMatrix"), 1, GL_TRUE, tx2.m);
-//
-//  DrawModel(sphere, moonShaderId, "inPosition", "inNormal", NULL);
 }
 
 void setTextureMatrix(void)
@@ -567,7 +571,8 @@ int main(int argc, char *argv[])
   fbo = initFBO2(RENDER_WIDTH, RENDER_HEIGHT, 0, 1);
 
   glEnable(GL_DEPTH_TEST);
-  glClearColor(0.4, 0.4, 0.4, 1.0f);
+  glDepthFunc(GL_LESS);
+  glClearColor(0.0, 0.0, 0.0, 1.0f);
   glEnable(GL_CULL_FACE);
 
   glEnable(GL_BLEND);

@@ -1,4 +1,4 @@
-#version 410
+#version 410 core
 
 in vec3 inPosition;
 in vec3 inNormal;
@@ -9,6 +9,7 @@ uniform float frequency;
 uniform mat4 modelViewMatrix;
 //uniform mat3 normalMatrix;
 uniform mat4 projectionMatrix;
+uniform mat4 textureMatrix;
 
 out vec3 vNormal;
 out vec3 pos;
