@@ -219,12 +219,9 @@ void drawIco(void)
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(icoFaces), icoFaces, GL_STATIC_DRAW);
 
   // Render the scene:
-//  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//  glClear(GL_DEPTH_BUFFER_BIT);
   glPatchParameteri(GL_PATCH_VERTICES, 3);
   glDrawElements(GL_PATCHES, icoIndexCount, GL_UNSIGNED_INT, 0);
   glBindVertexArray(NULL);
-
 }
 
 void drawObjects(GLuint shader)
@@ -452,6 +449,7 @@ void renderScene(void)
 
   updateCameraMatrix(NULL);
 
+  glDepthFunc(GL_LESS);
   glCullFace(GL_BACK);
   drawObjects(planetShaderId);
 
@@ -571,7 +569,6 @@ int main(int argc, char *argv[])
   fbo = initFBO2(RENDER_WIDTH, RENDER_HEIGHT, 0, 1);
 
   glEnable(GL_DEPTH_TEST);
-  glDepthFunc(GL_LESS);
   glClearColor(0.0, 0.0, 0.0, 1.0f);
   glEnable(GL_CULL_FACE);
 
