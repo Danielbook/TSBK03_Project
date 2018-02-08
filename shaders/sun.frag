@@ -1,12 +1,10 @@
-#version 410
+#version 410 core
 
 uniform float time;
 
 in vec3 vNormal;
 in vec3 pos;
 in float noise;
-
-uniform float sunAmp;
 
 out vec4 outColor;
 
