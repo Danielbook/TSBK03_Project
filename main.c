@@ -268,7 +268,7 @@ void drawObjects(GLuint shader)
 
   glUseProgram(planetShaderId);
 
-  glUniform1f(glGetUniformLocation(planetShaderId, "shade"), 0.2); // dark
+  glUniform1f(glGetUniformLocation(planetShaderId, "shade"), 0.9); // dark
   glUniform1i(glGetUniformLocation(planetShaderId, "TessLevelInner"), TessLevelInner);
   glUniform1i(glGetUniformLocation(planetShaderId, "TessLevelOuter1"), TessLevelOuter1);
   glUniform1i(glGetUniformLocation(planetShaderId, "TessLevelOuter2"), TessLevelOuter2);
