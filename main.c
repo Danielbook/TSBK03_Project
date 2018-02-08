@@ -31,9 +31,9 @@ Point3D cam, point;
 // * Model(s)
 Model *sphere, *icoM;
 // * Reference(s) to shader program(s)
-GLuint planetShaderId, sunShaderId, oceanShaderId, moonShaderId, projTexShaderId, atmosphereShaderId;
+GLuint planetShaderId, sunShaderId, oceanShaderId, moonShaderId, atmosphereShaderId;
 // Use to activate/disable projTexShader
-GLuint projTexMapUniform, planetShaderUniform;
+GLuint planetShaderUniform;
 
 FBOstruct *fbo;
 
@@ -82,10 +82,6 @@ void onTimer(int value)
 
 void loadShadowShaders()
 {
-  // Shadow map
-  projTexShaderId = loadShaders("../shaders/shadowmap.vert", "../shaders/shadowmap.frag");
-  projTexMapUniform = glGetUniformLocation(projTexShaderId, "textureUnit");
-
   // Load and compile shaders
   planetShaderId = loadShadersGT("../shaders/planet.vert", "../shaders/planet.frag", "../shaders/planet.geom", "../shaders/planet.tesc", "../shaders/planet.tese");
   planetShaderUniform = glGetUniformLocation(planetShaderId, "textureUnit");
@@ -157,7 +153,7 @@ void init(void)
   dumpInfo();
 
   // The shader must be loaded before this is called!
-  if (projTexShaderId == 0)
+  if (planetShaderId == 0)
     printf("Warning! Is the shader not loaded?\n");
 
   // GL inits
@@ -241,12 +237,6 @@ void drawObjects(GLuint shader)
   deltaTime = time - startTime;
   startTime = time;
 
-  // Enable Z-buffering
-  glEnable(GL_DEPTH_TEST);
-  // Enable backface culling
-  glEnable(GL_CULL_FACE);
-  glCullFace(GL_BACK);
-
 //  glUniformMatrix4fv(glGetUniformLocation(projTexShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
 //
 //  mat4 planeTransform = Mult(Rz(M_PI/2), T(0, -1000, 0));
@@ -261,30 +251,6 @@ void drawObjects(GLuint shader)
 //
 //  glUniform1f(glGetUniformLocation(projTexShaderId, "shade"), 0.9); // Brighter objects
 
-  ////   SUN
-  const float sunAmp = 0.09;
-  const float sunFreq = 0.04;
-
-  sunTransl = Mult(Ry(0), T(0, 0, 0));
-  sunRot = Mult(Ry(time*0.0002), S(0.01, 0.01, 0.01));
-  sunTransform = Mult(sunTransl, sunRot);
-
-  mv2 = Mult(modelViewMatrix, sunTransform);
-  tx2 = Mult(textureMatrix, sunTransform);
-  mat3 sunNormalMatrix = InverseTranspose(mv2);
-
-  glUseProgram(sunShaderId);
-  glUniform1f(glGetUniformLocation(sunShaderId, "amplitude"), sunAmp);
-  glUniform1f(glGetUniformLocation(sunShaderId, "frequency"), sunFreq);
-  glUniform1f(glGetUniformLocation(sunShaderId, "time"), time);
-  glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
-  glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "modelViewMatrix"), 1, GL_TRUE, mv2.m);
-  glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "normalMatrix"), 1, GL_TRUE, sunNormalMatrix.m);
-//  glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "textureMatrix"), 1, GL_TRUE, tx2.m);
-
-//  drawIco();
-  DrawModel(sphere, sunShaderId, "inPosition", "inNormal", NULL);
-
   //// PLANET
   const float avgTemp = 7.0;
 
@@ -292,8 +258,8 @@ void drawObjects(GLuint shader)
   vec3 snowColor = {0.8, 0.9, 1.0};
   vec3 sandColor = {0.95, 0.67, 0.26};
 
-  planetTransl = Mult(Ry(0), T(3, 0, 0)); // Planet translation
-  planetRot = Mult(Ry(time*0.0001), S(1.0, 1.0, 1.0)); // Planet Rotation
+  planetTransl = Mult(Ry(0), T(2, 0, 0)); // Planet translation
+  planetRot = Mult(Ry(time*0.0004), S(1.0, 1.0, 1.0)); // Planet Rotation
   planetTransform = Mult(planetTransl, planetRot); // Planet transform
 
   mv2 = Mult(modelViewMatrix, planetTransform);
@@ -323,7 +289,33 @@ void drawObjects(GLuint shader)
 
   drawIco();
 
-  //// Atmosphere
+  glUniform1f(glGetUniformLocation(planetShaderId, "shade"), 0.9); // brighter objects
+
+  ////   SUN
+  const float sunAmp = 0.09;
+  const float sunFreq = 0.04;
+
+  sunTransl = Mult(Ry(0), T(0, 0, 0));
+  sunRot = Mult(Ry(time*0.0002), S(0.01, 0.01, 0.01));
+  sunTransform = Mult(sunTransl, sunRot);
+
+  mv2 = Mult(modelViewMatrix, sunTransform);
+  tx2 = Mult(textureMatrix, sunTransform);
+  mat3 sunNormalMatrix = InverseTranspose(mv2);
+
+  glUseProgram(sunShaderId);
+  glUniform1f(glGetUniformLocation(sunShaderId, "amplitude"), sunAmp);
+  glUniform1f(glGetUniformLocation(sunShaderId, "frequency"), sunFreq);
+  glUniform1f(glGetUniformLocation(sunShaderId, "time"), time);
+  glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+  glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "modelViewMatrix"), 1, GL_TRUE, mv2.m);
+  glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "normalMatrix"), 1, GL_TRUE, sunNormalMatrix.m);
+//  glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "textureMatrix"), 1, GL_TRUE, tx2.m);
+
+//  drawIco();
+  DrawModel(sphere, sunShaderId, "inPosition", "inNormal", NULL);
+
+//  // Atmosphere
 //  atmosphereTransform = Mult(planetTransform, S(0.015, 0.015, 0.015)); // Planet pos + rotation
 //  mv2 = Mult(modelViewMatrix, atmosphereTransform);
 //  tx2 = Mult(textureMatrix, atmosphereTransform);
@@ -331,7 +323,7 @@ void drawObjects(GLuint shader)
 //
 //  glUseProgram(atmosphereShaderId);
 //  glUniform1f(glGetUniformLocation(atmosphereShaderId, "time"), time);
-//  glUniform1f(glGetUniformLocation(atmosphereShaderId, "atmosphereOpacity"), 0.2);
+//  glUniform1f(glGetUniformLocation(atmosphereShaderId, "atmosphereOpacity"), 0.001);
 //  glUniform3f(glGetUniformLocation(atmosphereShaderId, "lightPosition"), p_light.x, p_light.y, p_light.z);
 //  glUniformMatrix3fv(glGetUniformLocation(atmosphereShaderId, "normalMatrix"), 1, GL_TRUE, atmosphereNormalMatrix.m);
 //  glUniformMatrix4fv(glGetUniformLocation(atmosphereShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
@@ -420,11 +412,11 @@ void renderScene(void)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   //Using the simple shader
-  glUseProgram(projTexShaderId);
-  glUniform1i(projTexMapUniform, TEX_UNIT);
+  glUseProgram(planetShaderId);
+  glUniform1i(planetShaderUniform, TEX_UNIT);
   glActiveTexture(GL_TEXTURE0 + TEX_UNIT);
   glBindTexture(GL_TEXTURE_2D, 0);
-
+  glCullFace(GL_BACK);
   drawObjects(planetShaderId);
 
   //2. Render from camera.
@@ -441,8 +433,8 @@ void renderScene(void)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   //Using the projTex shader
-  glUseProgram(projTexShaderId);
-  glUniform1i(projTexMapUniform, TEX_UNIT);
+  glUseProgram(planetShaderId);
+  glUniform1i(planetShaderUniform, TEX_UNIT);
   glActiveTexture(GL_TEXTURE0 + TEX_UNIT);
   glBindTexture(GL_TEXTURE_2D, fbo->depth);
 

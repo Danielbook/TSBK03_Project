@@ -14,5 +14,4 @@ out vec4 vLightSourceCoord;
 void main() {
   gl_Position = inPosition;
   vNormal = inNormal;
-  vLightSourceCoord = textureMatrix * inPosition; // Transform vertex to light source coords
 }

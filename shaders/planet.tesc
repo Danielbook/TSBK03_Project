@@ -3,7 +3,6 @@
 layout(vertices = 4) out;
 
 in vec3 vNormal[]; // From vertex shader
-in vec4 vLightSourceCoord[];
 
 uniform int TessLevelInner; // Sent from main program
 uniform int TessLevelOuter1;
@@ -14,7 +13,6 @@ uniform mat4 projectionMatrix;
 uniform float lod_factor;
 
 out vec3 tcNormal[]; // Output of TC
-out vec4 tcLightSourceCoord[];
 
 #define ID gl_InvocationID
 
@@ -85,7 +83,6 @@ void main()
   }
   gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
   tcNormal[ID] = vNormal[ID];
-  tcLightSourceCoord[ID] = vLightSourceCoord[ID];
 
 //  gl_TessLevelInner[0] = TessLevelInner; // How often the inside of a patch is divided
 //  gl_TessLevelOuter[0] = TessLevelOuter1; // How often an edge is divided

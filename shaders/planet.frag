@@ -4,8 +4,6 @@ in float noise; // Input of FS
 in vec3 gsNormal;
 in vec4 gsPosition;
 in vec4 gsLightSourceCoord;
-//in vec3 gTriDistance;
-//in vec3 gPatchDistance;
 
 uniform vec3 lightPosition;
 uniform float amplitude;
@@ -15,9 +13,8 @@ uniform vec3 snowColor;
 uniform vec3 sandColor;
 uniform float avgTemp;
 uniform mat4 modelViewMatrix;
-uniform mat4 modelView;
-uniform mat4 projectionMatrix;
 uniform mat4 viewMatrix;
+uniform mat4 projectionMatrix;
 uniform sampler2D textureUnit;
 uniform float shade;
 
@@ -39,16 +36,18 @@ void main() {
 //  color = amplify(d1, 40, -0.5) * amplify(d2, 60, -0.5) * color;
 //
 //  outColor = vec4(color, 1.0);
-
+//
   vec3 ambient, diffuse, finalColor;
-  float kd = 0.5, ka = 0.1;
+  float kd = 5.8, ka = 0.0;
 
   vec3 N = normalize(gsNormal);
+  vec3 lightPos = (viewMatrix * vec4(lightPosition, 1.0)).xyz;
+  vec3 L = normalize(lightPos - gsPosition.xyz);
+  float distance = length(lightPos.xyz - gsPosition.xyz);
 
-  vec4 lightPos = viewMatrix * vec4(lightPosition, 1.0);
-  vec3 L = lightPos.xyz - gsPosition.xyz;
+  float df = max(0.0, dot(N, L));
 
-  float df = (dot(N, L));
+//  df = df * (1.0 / (1.0 + (0.25 * distance * distance)));
 
   float shoreLineTop = max(-10, 0.02);
 
@@ -63,14 +62,12 @@ void main() {
 
   finalColor = diffuse + ambient;
 
-  vec4 planetColor = vec4(finalColor, 1.0);
-
   // Perform perspective division to get the actual texture position
   vec4 shadowCoordinateWdivide = gsLightSourceCoord / gsLightSourceCoord.w;
 
   // Used to lower moire' pattern and self-shadowing
   // The optimal value here will vary with different GPU's depending on their Z buffer resolution.
-  shadowCoordinateWdivide.z -= 0.002; // 0.0005;
+  shadowCoordinateWdivide.z -= 0.02; // 0.0005;
 
   float shadow = 1.0;
   float dx, dy;
@@ -84,7 +81,7 @@ void main() {
         if (distanceFromLight < shadowCoordinateWdivide.z) // shadow
           shadow -= 0.5/64; // = 0.5 shadow if total shadow (for 64 samples)
     }
-    outColor = vec4(shadow * shade) * planetColor;
-//    outColor = planetColor;
+    outColor = vec4(shadow * shade) * vec4(finalColor, 1.0);
+//    outColor = vec4(finalColor, 1.0);
 }
 

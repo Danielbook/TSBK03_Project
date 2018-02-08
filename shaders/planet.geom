@@ -5,11 +5,11 @@ layout(triangle_strip, max_vertices = 3) out;
 
 in vec3 tePatchDistance[3]; // Input of GE
 in vec3 teNormal[3];
-in vec4 teLightSourceCoord[3];
 
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
 uniform mat3 normalMatrix;
+uniform mat4 textureMatrix;
 uniform float amplitude;
 uniform float frequency;
 
@@ -121,9 +121,9 @@ void main()
   noisePerVert[2] = amplitude * pnoise(frequency * gl_in[2].gl_Position.xyz, vec3(20.0));
 
   // Recalc normals!
-  vec4 A = gl_in[0].gl_Position + noisePerVert[0] * vec4(teNormal[0], 1.0);
-  vec4 B = gl_in[1].gl_Position + noisePerVert[1] * vec4(teNormal[1], 1.0);
-  vec4 C = gl_in[2].gl_Position + noisePerVert[2] * vec4(teNormal[2], 1.0);
+  vec4 A = gl_in[0].gl_Position + noisePerVert[0] * vec4(normalize(teNormal[0]), 1.0);
+  vec4 B = gl_in[1].gl_Position + noisePerVert[1] * vec4(normalize(teNormal[1]), 1.0);
+  vec4 C = gl_in[2].gl_Position + noisePerVert[2] * vec4(normalize(teNormal[2]), 1.0);
 
   vec3 v1 = vec3(C - A);
   vec3 v2 = vec3(B - A);
@@ -133,9 +133,8 @@ void main()
     gsNormal = n;
     vec4 disp = gl_in[i].gl_Position + vec4(gsNormal * noisePerVert[i], 1.0);
     gl_Position = projectionMatrix * modelViewMatrix * disp;
-    gsPosition = modelViewMatrix * disp;
-
-    gsLightSourceCoord = teLightSourceCoord[i];
+    gsPosition = modelViewMatrix * gl_in[i].gl_Position;
+    gsLightSourceCoord = textureMatrix * disp;
 
     noise = noisePerVert[i];
     EmitVertex();
