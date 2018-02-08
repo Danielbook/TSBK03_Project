@@ -29,7 +29,7 @@ mat4 modelViewMatrix, textureMatrix;
 Point3D cam, point;
 
 // * Model(s)
-Model *sphere, *ico;
+Model *sphere, *icoM;
 // * Reference(s) to shader program(s)
 GLuint planetShaderId, sunShaderId, oceanShaderId, moonShaderId, projTexShaderId, atmosphereShaderId;
 // Use to activate/disable projTexShader
@@ -62,10 +62,10 @@ GLuint texture;
 
 GLfloat a;
 
-GLint TessLevelInner = 4;
-GLint TessLevelOuter1 = 4;
-GLint TessLevelOuter2 = 4;
-GLint TessLevelOuter3 = 4;
+GLint TessLevelInner = 10;
+GLint TessLevelOuter1 = 10;
+GLint TessLevelOuter2 = 10;
+GLint TessLevelOuter3 = 10;
 GLfloat mountAmp = 1.0f;
 GLfloat mountFreq = 1.8f;
 
@@ -167,6 +167,8 @@ void init(void)
 
   // Upload geometry to the GPU:
   sphere = LoadModelPlus("../assets/bestSphere.obj"); // Sphere
+
+  icoM = LoadModelPlus("../assets/ico.obj"); // Sphere
 
   groundModel = LoadDataToModel(
           ground,
@@ -318,11 +320,11 @@ void drawObjects(GLuint shader)
 
   drawIco();
 
-//  glUniform1f(glGetUniformLocation(planetShaderId, "shade"), 0.9); // Brighter objects
+  glUniform1f(glGetUniformLocation(planetShaderId, "shade"), 0.9); // Brighter objects
 
 //  // Ocean
 //  vec3 oceanColor = {0, 11 / 255, 255 / 255};
-//  oceanTransform = Mult(planetTransform, S(0.97, 0.97, 0.97)); // Planet pos + rotation
+//  oceanTransform = Mult(planetTransform, S(1.0, 1.0, 1.0)); // Planet pos + rotation
 //  mv2 = Mult(modelViewMatrix, oceanTransform);
 //  tx2 = Mult(textureMatrix, oceanTransform);
 //  mat3 oceanNormalMatrix = InverseTranspose(mv2);
@@ -338,7 +340,7 @@ void drawObjects(GLuint shader)
 //  glUniformMatrix4fv(glGetUniformLocation(oceanShaderId, "modelViewMatrix"), 1, GL_TRUE, mv2.m);
 //  glUniformMatrix4fv(glGetUniformLocation(oceanShaderId, "textureMatrix"), 1, GL_TRUE, tx2.m);
 //
-//  DrawModel(sphere, oceanShaderId, "inPosition", "inNormal", NULL);
+//  DrawModel(icoM, oceanShaderId, "inPosition", "inNormal", NULL);
 
 //  // Atmosphere
 //  atmosphereTransform = Mult(planetTransform, S(1.15, 1.15, 1.15)); // Planet pos + rotation

@@ -18,8 +18,6 @@ out vec3 gsNormal; // Output of GE
 out vec4 gsLightSourceCoord;
 out vec4 gsPosition;
 out float noise;
-//out vec3 gPatchDistance;
-//out vec3 gTriDistance;
 
 vec3 mod289(vec3 x)
 {
@@ -133,8 +131,6 @@ void main()
   vec3 n = normalize(normalMatrix * cross(v2, v1));
 
   // Vertex 0
-//  gPatchDistance = tePatchDistance[0];
-//  gTriDistance = vec3(1, 0, 0);
   gsNormal = n;
   gl_Position = projectionMatrix * modelViewMatrix * gl_in[0].gl_Position + vec4(gsNormal * noise0, 1.0);
   gsPosition = modelViewMatrix * gl_in[0].gl_Position + vec4(gsNormal * noise0, 1.0);
@@ -143,8 +139,6 @@ void main()
   EmitVertex();
 
   // Vertex 1
-//  gPatchDistance = tePatchDistance[1];
-//  gTriDistance = vec3(0, 1, 0);
   gsNormal = n;
   gl_Position = projectionMatrix * modelViewMatrix * gl_in[1].gl_Position + vec4(gsNormal * noise1, 1.0);
   gsPosition = modelViewMatrix * gl_in[1].gl_Position + vec4(gsNormal * noise1, 1.0);
@@ -153,8 +147,6 @@ void main()
   EmitVertex();
 
   // Vertex 2
-//  gPatchDistance = tePatchDistance[2];
-//  gTriDistance = vec3(0, 0, 1);
   gsNormal = n;
   gl_Position = projectionMatrix * modelViewMatrix * gl_in[2].gl_Position + vec4(gsNormal * noise2, 1.0);
   gsPosition = modelViewMatrix * gl_in[2].gl_Position + vec4(gsNormal * noise2, 1.0);

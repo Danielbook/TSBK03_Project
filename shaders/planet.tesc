@@ -27,13 +27,6 @@ void main()
   gl_TessLevelOuter[0] = TessLevelOuter1; // How often an edge is divided
   gl_TessLevelOuter[1] = TessLevelOuter2;
   gl_TessLevelOuter[2] = TessLevelOuter3;
-
-
-//  tcNoise[0] = vNoise[0];
-
-//  tcLightSourceCoord[0] = vLightSourceCoord[0];
-//  tcLightSourceCoord[1] = vLightSourceCoord[1];
-//  tcLightSourceCoord[2] = vLightSourceCoord[2];
 }
 
 

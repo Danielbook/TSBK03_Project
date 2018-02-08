@@ -10,8 +10,6 @@ uniform mat3 normalMatrix;
 
 out vec3 vNormal; // Output of VS
 out vec3 vPosition;
-
-//out float vNoise;
 out vec4 vLightSourceCoord;
 
 void main() {

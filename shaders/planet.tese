@@ -9,7 +9,6 @@ in vec4 tcLightSourceCoord[];
 out vec3 tePosition; // Output of TE
 out vec3 teNormal;
 out vec4 teLightSourceCoord;
-//out vec3 tePatchDistance;
 
 void main()
 {
