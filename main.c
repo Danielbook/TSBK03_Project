@@ -52,7 +52,7 @@ Point3D l_light = {1, 0, 0};
 //Point3D l_light = {0, 0, -1};
 
 //Camera position
-Point3D p_camera = {0, 25, 25};
+Point3D p_camera = {0, 3, 8};
 
 //Camera lookAt
 Point3D l_camera = {0, 0, 0};
@@ -66,8 +66,8 @@ GLint TessLevelInner = 10;
 GLint TessLevelOuter1 = 10;
 GLint TessLevelOuter2 = 10;
 GLint TessLevelOuter3 = 10;
-GLfloat mountAmp = 1.0f;
-GLfloat mountFreq = 1.8f;
+GLfloat mountAmp = 0.1f;
+GLfloat mountFreq = 2.0f;
 GLfloat lod_factor = 1.0f;
 
 int frame = 0, time, timebase = 0, deltaTime = 0, startTime = 0, nVertices = 0;
@@ -292,7 +292,7 @@ void drawObjects(GLuint shader)
   vec3 snowColor = {0.8, 0.9, 1.0};
   vec3 sandColor = {0.95, 0.67, 0.26};
 
-  planetTransl = Mult(Ry(0), T(30, 0, 0)); // Planet translation
+  planetTransl = Mult(Ry(0), T(3, 0, 0)); // Planet translation
   planetRot = Mult(Ry(time*0.0001), S(1.0, 1.0, 1.0)); // Planet Rotation
   planetTransform = Mult(planetTransl, planetRot); // Planet transform
 
@@ -324,30 +324,30 @@ void drawObjects(GLuint shader)
   drawIco();
 
   //// Atmosphere
-  atmosphereTransform = Mult(planetTransform, S(0.015, 0.015, 0.015)); // Planet pos + rotation
-  mv2 = Mult(modelViewMatrix, atmosphereTransform);
-  tx2 = Mult(textureMatrix, atmosphereTransform);
-  mat3 atmosphereNormalMatrix = InverseTranspose(mv2);
-
-  glUseProgram(atmosphereShaderId);
-  glUniform1f(glGetUniformLocation(atmosphereShaderId, "time"), time);
-  glUniform1f(glGetUniformLocation(atmosphereShaderId, "atmosphereOpacity"), 0.2);
-  glUniform3f(glGetUniformLocation(atmosphereShaderId, "lightPosition"), p_light.x, p_light.y, p_light.z);
-  glUniformMatrix3fv(glGetUniformLocation(atmosphereShaderId, "normalMatrix"), 1, GL_TRUE, atmosphereNormalMatrix.m);
-  glUniformMatrix4fv(glGetUniformLocation(atmosphereShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
-  glUniformMatrix4fv(glGetUniformLocation(atmosphereShaderId, "viewMatrix"), 1, GL_TRUE, modelViewMatrix.m);
-  glUniformMatrix4fv(glGetUniformLocation(atmosphereShaderId, "modelViewMatrix"), 1, GL_TRUE, mv2.m);
-  glUniformMatrix4fv(glGetUniformLocation(atmosphereShaderId, "textureMatrix"), 1, GL_TRUE, tx2.m);
-
-  DrawModel(sphere, atmosphereShaderId, "inPosition", "inNormal", NULL);
+//  atmosphereTransform = Mult(planetTransform, S(0.015, 0.015, 0.015)); // Planet pos + rotation
+//  mv2 = Mult(modelViewMatrix, atmosphereTransform);
+//  tx2 = Mult(textureMatrix, atmosphereTransform);
+//  mat3 atmosphereNormalMatrix = InverseTranspose(mv2);
+//
+//  glUseProgram(atmosphereShaderId);
+//  glUniform1f(glGetUniformLocation(atmosphereShaderId, "time"), time);
+//  glUniform1f(glGetUniformLocation(atmosphereShaderId, "atmosphereOpacity"), 0.2);
+//  glUniform3f(glGetUniformLocation(atmosphereShaderId, "lightPosition"), p_light.x, p_light.y, p_light.z);
+//  glUniformMatrix3fv(glGetUniformLocation(atmosphereShaderId, "normalMatrix"), 1, GL_TRUE, atmosphereNormalMatrix.m);
+//  glUniformMatrix4fv(glGetUniformLocation(atmosphereShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+//  glUniformMatrix4fv(glGetUniformLocation(atmosphereShaderId, "viewMatrix"), 1, GL_TRUE, modelViewMatrix.m);
+//  glUniformMatrix4fv(glGetUniformLocation(atmosphereShaderId, "modelViewMatrix"), 1, GL_TRUE, mv2.m);
+//  glUniformMatrix4fv(glGetUniformLocation(atmosphereShaderId, "textureMatrix"), 1, GL_TRUE, tx2.m);
+//
+//  DrawModel(sphere, atmosphereShaderId, "inPosition", "inNormal", NULL);
 
   // Moon
   vec3 moonColor = {0, 128 / 255, 255 / 255};
   const float moonMountFreq = 0.04;
   const float moonMountAmp = 0.09;
 
-  moonTransl = Mult(Mult(Rz(0), Ry(time*0.001)), T(-4, 0, 0)); // Translation
-  moonRot = Mult(Ry(0), S(0.01, 0.01, 0.01)); // Rotation
+  moonTransl = Mult(Mult(Rz(0), Ry(time*0.001)), T(-1, 0, 0)); // Translation
+  moonRot = Mult(Ry(0), S(0.001, 0.001, 0.001)); // Rotation
   moonTransform = Mult(planetTransl, Mult(moonTransl, moonRot));
 
   mv2 = Mult(modelViewMatrix, moonTransform);
@@ -594,7 +594,7 @@ int main(int argc, char *argv[])
   glutReshapeFunc(reshape);
 
   glutRepeatingTimerFunc(20); // MicroGlut only
-  glutKeyboardFunc(processNormalKeys); //disable this to get zpr to work
+//  glutKeyboardFunc(processNormalKeys); //disable this to get zpr to work
   glutMainLoop();
   exit(0);
 }
