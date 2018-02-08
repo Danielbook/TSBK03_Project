@@ -52,7 +52,7 @@ Point3D l_light = {1, 0, 0};
 //Point3D l_light = {0, 0, -1};
 
 //Camera position
-Point3D p_camera = {0, 5, 15};
+Point3D p_camera = {0, 2, 5};
 
 //Camera lookAt
 Point3D l_camera = {0, 0, 0};
@@ -68,6 +68,7 @@ GLint TessLevelOuter2 = 10;
 GLint TessLevelOuter3 = 10;
 GLfloat mountAmp = 1.0f;
 GLfloat mountFreq = 1.8f;
+GLfloat lod_factor = 1.0f;
 
 int frame = 0, time, timebase = 0, deltaTime = 0, startTime = 0, nVertices = 0;
 
@@ -288,8 +289,8 @@ void drawObjects(GLuint shader)
   vec3 snowColor = {0.8, 0.9, 1.0};
   vec3 sandColor = {0.95, 0.67, 0.26};
 
-  planetTransl = Mult(Ry(time*0.001), T(3, 0, 0)); // Planet translation
-  planetRot = Mult(Ry(time*0.002), S(1.0, 1.0, 1.0)); // Planet Rotation
+  planetTransl = Mult(Ry(0), T(0, 0, -2)); // Planet translation
+  planetRot = Mult(Ry(time*0.0001), S(1.0, 1.0, 1.0)); // Planet Rotation
   planetTransform = Mult(planetTransl, planetRot); // Planet transform
 
   mv2 = Mult(modelViewMatrix, planetTransform);
@@ -303,6 +304,7 @@ void drawObjects(GLuint shader)
   glUniform1i(glGetUniformLocation(planetShaderId, "TessLevelOuter1"), TessLevelOuter1);
   glUniform1i(glGetUniformLocation(planetShaderId, "TessLevelOuter2"), TessLevelOuter2);
   glUniform1i(glGetUniformLocation(planetShaderId, "TessLevelOuter3"), TessLevelOuter3);
+  glUniform1f(glGetUniformLocation(planetShaderId, "lod_factor"), lod_factor);
   glUniform1f(glGetUniformLocation(planetShaderId, "amplitude"), mountAmp);
   glUniform1f(glGetUniformLocation(planetShaderId, "frequency"), mountFreq);
   glUniform1f(glGetUniformLocation(planetShaderId, "avgTemp"), avgTemp);
@@ -546,6 +548,18 @@ void processNormalKeys(unsigned char key, int x, int y)
       if(mountFreq > 0) {
         mountFreq -= 0.01;
         printf("Mountain freq: %f\n", mountFreq);
+      }
+      break;
+    }
+    case '0': {
+      lod_factor += 1.0;
+      printf("lod_factor: %f\n", lod_factor);
+      break;
+    }
+    case '9': {
+      if(lod_factor > 0) {
+        lod_factor -= 1.0;
+        printf("lod_factor: %f\n", lod_factor);
       }
       break;
     }
