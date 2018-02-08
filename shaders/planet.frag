@@ -46,7 +46,7 @@ void main() {
   vec3 N = normalize(gsNormal);
 
   vec4 lightPos = viewMatrix * vec4(lightPosition, 1.0);
-  vec3 L = lightPos.xyz - gsPosition.xyz;
+  vec3 L = normalize(lightPos.xyz - gsPosition.xyz);
 
   float df = (dot(N, L));
 
