@@ -66,8 +66,8 @@ GLint TessLevelInner = 10;
 GLint TessLevelOuter1 = 10;
 GLint TessLevelOuter2 = 10;
 GLint TessLevelOuter3 = 10;
-GLfloat mountAmp = 1.0f;
-GLfloat mountFreq = 1.8f;
+GLfloat mountAmp = 0.1f;
+GLfloat mountFreq = 2.0f;
 GLfloat lod_factor = 1.0f;
 
 int frame = 0, time, timebase = 0, deltaTime = 0, startTime = 0, nVertices = 0;
@@ -339,7 +339,7 @@ void drawObjects(GLuint shader)
   glUniformMatrix4fv(glGetUniformLocation(atmosphereShaderId, "modelViewMatrix"), 1, GL_TRUE, mv2.m);
   glUniformMatrix4fv(glGetUniformLocation(atmosphereShaderId, "textureMatrix"), 1, GL_TRUE, tx2.m);
 
-  DrawModel(sphere, atmosphereShaderId, "inPosition", "inNormal", NULL);
+//  DrawModel(sphere, atmosphereShaderId, "inPosition", "inNormal", NULL);
 
   // Moon
   vec3 moonColor = {0, 128 / 255, 255 / 255};
@@ -594,7 +594,7 @@ int main(int argc, char *argv[])
   glutReshapeFunc(reshape);
 
   glutRepeatingTimerFunc(20); // MicroGlut only
-  glutKeyboardFunc(processNormalKeys); //disable this to get zpr to work
+//  glutKeyboardFunc(processNormalKeys); //disable this to get zpr to work
   glutMainLoop();
   exit(0);
 }

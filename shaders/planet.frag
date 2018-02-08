@@ -59,7 +59,7 @@ void main() {
   finalColor = mix(finalColor, snowColor, smoothstep(avgTemp, avgTemp+7.0, noise));
 
   ambient = ka * finalColor;
-  diffuse = kd * finalColor *  df;
+  diffuse = kd * finalColor * df;
 
   finalColor = diffuse + ambient;
 
