@@ -132,7 +132,7 @@ void main()
   for(int i = 0; i < 3; i++) {
     gsNormal = n;
     vec4 disp = gl_in[i].gl_Position + vec4(gsNormal * noisePerVert[i], 1.0);
-    gl_Position = projectionMatrix * modelViewMatrix *disp;
+    gl_Position = projectionMatrix * modelViewMatrix * disp;
     gsPosition = modelViewMatrix * disp;
 
     gsLightSourceCoord = teLightSourceCoord[i];

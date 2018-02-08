@@ -48,7 +48,7 @@ void main() {
   vec4 lightPos = viewMatrix * vec4(lightPosition, 1.0);
   vec3 L = lightPos.xyz - gsPosition.xyz;
 
-  float df = dot(N, L);
+  float df = (dot(N, L));
 
   float shoreLineTop = max(-10, 0.02);
 
