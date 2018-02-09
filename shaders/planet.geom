@@ -121,9 +121,9 @@ void main()
   noisePerVert[2] = amplitude * pnoise(frequency * gl_in[2].gl_Position.xyz, vec3(20.0));
 
   // Recalc normals!
-  vec4 A = gl_in[0].gl_Position + noisePerVert[0] * vec4(normalize(teNormal[0]), 1.0);
-  vec4 B = gl_in[1].gl_Position + noisePerVert[1] * vec4(normalize(teNormal[1]), 1.0);
-  vec4 C = gl_in[2].gl_Position + noisePerVert[2] * vec4(normalize(teNormal[2]), 1.0);
+  vec4 A = gl_in[0].gl_Position + noisePerVert[0] * vec4(teNormal[0], 1.0);
+  vec4 B = gl_in[1].gl_Position + noisePerVert[1] * vec4(teNormal[1], 1.0);
+  vec4 C = gl_in[2].gl_Position + noisePerVert[2] * vec4(teNormal[2], 1.0);
 
   vec3 v1 = vec3(C - A);
   vec3 v2 = vec3(B - A);
