@@ -9,8 +9,8 @@ uniform vec3 lightPosition;
 uniform float amplitude;
 uniform float frequency;
 uniform vec3 surfaceColor;
-uniform vec3 snowColor;
-uniform vec3 sandColor;
+uniform vec3 topColor;
+uniform vec3 floorColor;
 uniform float avgTemp;
 uniform mat4 modelViewMatrix;
 uniform mat4 viewMatrix;
@@ -52,10 +52,10 @@ void main() {
   float shoreLineTop = max(-10, 0.02);
 
   // Sandy shores
-  finalColor = mix(sandColor, surfaceColor, smoothstep(0.0, shoreLineTop, noise));
+  finalColor = mix(floorColor, surfaceColor, smoothstep(0.0, shoreLineTop, noise));
 
   // Snow on peaks
-  finalColor = mix(finalColor, snowColor, smoothstep(avgTemp, avgTemp+7.0, noise));
+  finalColor = mix(finalColor, topColor, smoothstep(avgTemp, avgTemp+7.0, noise));
 
   ambient = ka * finalColor;
   diffuse = kd * finalColor * df;

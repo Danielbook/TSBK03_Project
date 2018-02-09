@@ -62,6 +62,8 @@ GLuint texture;
 
 GLfloat a;
 
+GLint aPlanet;
+
 GLint TessLevelInner = 10;
 GLint TessLevelOuter1 = 10;
 GLint TessLevelOuter2 = 10;
@@ -266,9 +268,10 @@ void drawObjects(GLuint shader)
   tx2 = Mult(textureMatrix, planetTransform);
   mat3 planetNormalMatrix = InverseTranspose(mv2);
 
+
   glUseProgram(planetShaderId);
 
-  glUniform1f(glGetUniformLocation(planetShaderId, "shade"), 0.9); // dark
+  glUniform1f(glGetUniformLocation(planetShaderId, "shade"), 0.2); // dark
   glUniform1i(glGetUniformLocation(planetShaderId, "TessLevelInner"), TessLevelInner);
   glUniform1i(glGetUniformLocation(planetShaderId, "TessLevelOuter1"), TessLevelOuter1);
   glUniform1i(glGetUniformLocation(planetShaderId, "TessLevelOuter2"), TessLevelOuter2);
@@ -279,8 +282,8 @@ void drawObjects(GLuint shader)
   glUniform1f(glGetUniformLocation(planetShaderId, "avgTemp"), avgTemp);
   glUniform3f(glGetUniformLocation(planetShaderId, "lightPosition"), p_light.x, p_light.y, p_light.z);
   glUniform3f(glGetUniformLocation(planetShaderId, "surfaceColor"), surfaceColor.x, surfaceColor.y, surfaceColor.z);
-  glUniform3f(glGetUniformLocation(planetShaderId, "snowColor"), snowColor.x, snowColor.y, snowColor.z);
-  glUniform3f(glGetUniformLocation(planetShaderId, "sandColor"), sandColor.x, sandColor.y, sandColor.z);
+  glUniform3f(glGetUniformLocation(planetShaderId, "topColor"), snowColor.x, snowColor.y, snowColor.z);
+  glUniform3f(glGetUniformLocation(planetShaderId, "floorColor"), sandColor.x, sandColor.y, sandColor.z);
   glUniformMatrix4fv(glGetUniformLocation(planetShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
   glUniformMatrix3fv(glGetUniformLocation(planetShaderId, "normalMatrix"), 1, GL_TRUE, planetNormalMatrix.m);
   glUniformMatrix4fv(glGetUniformLocation(planetShaderId, "viewMatrix"), 1, GL_TRUE, modelViewMatrix.m);
@@ -334,31 +337,42 @@ void drawObjects(GLuint shader)
 //  DrawModel(sphere, atmosphereShaderId, "inPosition", "inNormal", NULL);
 
   // Moon
-  vec3 moonColor = {0, 128 / 255, 255 / 255};
+  vec3 moonColor = {0.82, 0.82, 0.825};
+  vec3 moonTopColor = {0.8, 0.8, 0.8};
+  vec3 moonFloorColor = {0.2, 0.2, 0.2};
   const float moonMountFreq = 0.04;
   const float moonMountAmp = 0.09;
 
   moonTransl = Mult(Mult(Rz(0), Ry(time*0.001)), T(-1, 0, 0)); // Translation
-  moonRot = Mult(Ry(0), S(0.001, 0.001, 0.001)); // Rotation
+  moonRot = Mult(Ry(0), S(0.2, 0.2, 0.2)); // Rotation
   moonTransform = Mult(planetTransl, Mult(moonTransl, moonRot));
 
   mv2 = Mult(modelViewMatrix, moonTransform);
   tx2 = Mult(textureMatrix, moonTransform);
+  mat3 moonNormalMatrix = InverseTranspose(mv2);
 
-  glUseProgram(moonShaderId);
-  glUniform1f(glGetUniformLocation(moonShaderId, "time"), time);
-  glUniform1f(glGetUniformLocation(moonShaderId, "moonMountFreq"), moonMountFreq);
-  glUniform1f(glGetUniformLocation(moonShaderId, "moonMountAmp"), moonMountAmp);
-  glUniform3f(glGetUniformLocation(moonShaderId, "lightPosition"), p_light.x, p_light.y, p_light.z);
-  glUniform3f(glGetUniformLocation(moonShaderId, "moonColor"), moonColor.x, moonColor.y, moonColor.z);
-  glUniformMatrix4fv(glGetUniformLocation(moonShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
-  glUniformMatrix4fv(glGetUniformLocation(moonShaderId, "viewMatrix"), 1, GL_TRUE, modelViewMatrix.m);
-  glUniformMatrix4fv(glGetUniformLocation(moonShaderId, "modelViewMatrix"), 1, GL_TRUE, mv2.m);
-  glUniformMatrix4fv(glGetUniformLocation(moonShaderId, "textureMatrix"), 1, GL_TRUE, tx2.m);
+  glUseProgram(planetShaderId);
 
-  DrawModel(sphere, moonShaderId, "inPosition", "inNormal", NULL);
+  glUniform1f(glGetUniformLocation(planetShaderId, "shade"), 0.9); // dark
+  glUniform1i(glGetUniformLocation(planetShaderId, "TessLevelInner"), TessLevelInner);
+  glUniform1i(glGetUniformLocation(planetShaderId, "TessLevelOuter1"), TessLevelOuter1);
+  glUniform1i(glGetUniformLocation(planetShaderId, "TessLevelOuter2"), TessLevelOuter2);
+  glUniform1i(glGetUniformLocation(planetShaderId, "TessLevelOuter3"), TessLevelOuter3);
+  glUniform1f(glGetUniformLocation(planetShaderId, "lod_factor"), lod_factor);
+  glUniform1f(glGetUniformLocation(planetShaderId, "amplitude"), moonMountAmp);
+  glUniform1f(glGetUniformLocation(planetShaderId, "frequency"), moonMountFreq);
+  glUniform1f(glGetUniformLocation(planetShaderId, "avgTemp"), avgTemp);
+  glUniform3f(glGetUniformLocation(planetShaderId, "lightPosition"), p_light.x, p_light.y, p_light.z);
+  glUniform3f(glGetUniformLocation(planetShaderId, "surfaceColor"), moonColor.x, moonColor.y, moonColor.z);
+  glUniform3f(glGetUniformLocation(planetShaderId, "topColor"), moonTopColor.x, moonTopColor.y, moonTopColor.z);
+  glUniform3f(glGetUniformLocation(planetShaderId, "floorColor"), moonFloorColor.x, moonFloorColor.y, moonFloorColor.z);
+  glUniformMatrix4fv(glGetUniformLocation(planetShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+  glUniformMatrix3fv(glGetUniformLocation(planetShaderId, "normalMatrix"), 1, GL_TRUE, moonNormalMatrix.m);
+  glUniformMatrix4fv(glGetUniformLocation(planetShaderId, "viewMatrix"), 1, GL_TRUE, modelViewMatrix.m);
+  glUniformMatrix4fv(glGetUniformLocation(planetShaderId, "modelViewMatrix"), 1, GL_TRUE, mv2.m);
+  glUniformMatrix4fv(glGetUniformLocation(planetShaderId, "textureMatrix"), 1, GL_TRUE, tx2.m);
 
-  //  glUniform1f(glGetUniformLocation(planetShaderId, "shade"), 0.9); // Brighter objects
+  drawIco();
 
 //  // Ocean
 //  vec3 oceanColor = {0, 11 / 255, 255 / 255};
