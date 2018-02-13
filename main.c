@@ -64,13 +64,14 @@ GLfloat a;
 
 GLint aPlanet;
 
-GLint TessLevelInner = 10;
-GLint TessLevelOuter1 = 10;
-GLint TessLevelOuter2 = 10;
-GLint TessLevelOuter3 = 10;
+GLfloat TessLevelInner = 10.0;
+GLfloat TessLevelOuter1 = 10.0;
+GLfloat TessLevelOuter2 = 10.0;
+GLfloat TessLevelOuter3 = 10.0;
 GLfloat mountAmp = 0.1f;
 GLfloat mountFreq = 2.0f;
 GLfloat lod_factor = 1.0f;
+GLint  tessellationFactor = 60;
 
 int frame = 0, time, timebase = 0, deltaTime = 0, startTime = 0, nVertices = 0;
 
@@ -225,6 +226,7 @@ void drawIco(void)
   glBindVertexArray(NULL);
 }
 
+
 void drawObjects(GLuint shader)
 {
   mat4 planetTransl, planetRot, planetTransform;
@@ -233,6 +235,8 @@ void drawObjects(GLuint shader)
   mat4 atmosphereTransform;
   mat4 moonTransl, moonRot, moonTransform;
   mat4 mv2, tx2;
+
+  p_camera = newCameraPosition();
 
   time = glutGet(GLUT_ELAPSED_TIME);
 
@@ -272,10 +276,10 @@ void drawObjects(GLuint shader)
   glUseProgram(planetShaderId);
 
   glUniform1f(glGetUniformLocation(planetShaderId, "shade"), 0.2); // dark
-  glUniform1i(glGetUniformLocation(planetShaderId, "TessLevelInner"), TessLevelInner);
-  glUniform1i(glGetUniformLocation(planetShaderId, "TessLevelOuter1"), TessLevelOuter1);
-  glUniform1i(glGetUniformLocation(planetShaderId, "TessLevelOuter2"), TessLevelOuter2);
-  glUniform1i(glGetUniformLocation(planetShaderId, "TessLevelOuter3"), TessLevelOuter3);
+  glUniform1f(glGetUniformLocation(planetShaderId, "TessLevelInner"), TessLevelInner);
+  glUniform1f(glGetUniformLocation(planetShaderId, "TessLevelOuter1"), TessLevelOuter1);
+  glUniform1f(glGetUniformLocation(planetShaderId, "TessLevelOuter2"), TessLevelOuter2);
+  glUniform1f(glGetUniformLocation(planetShaderId, "TessLevelOuter3"), TessLevelOuter3);
   glUniform1f(glGetUniformLocation(planetShaderId, "lod_factor"), lod_factor);
   glUniform1f(glGetUniformLocation(planetShaderId, "amplitude"), mountAmp);
   glUniform1f(glGetUniformLocation(planetShaderId, "frequency"), mountFreq);
@@ -284,6 +288,8 @@ void drawObjects(GLuint shader)
   glUniform3f(glGetUniformLocation(planetShaderId, "surfaceColor"), surfaceColor.x, surfaceColor.y, surfaceColor.z);
   glUniform3f(glGetUniformLocation(planetShaderId, "topColor"), snowColor.x, snowColor.y, snowColor.z);
   glUniform3f(glGetUniformLocation(planetShaderId, "floorColor"), sandColor.x, sandColor.y, sandColor.z);
+  glUniform3f(glGetUniformLocation(planetShaderId, "camera"), p_camera.x, p_camera.y, p_camera.z);
+  glUniform1i(glGetUniformLocation(planetShaderId, "tessellationFactor"), tessellationFactor);
   glUniformMatrix4fv(glGetUniformLocation(planetShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
   glUniformMatrix3fv(glGetUniformLocation(planetShaderId, "normalMatrix"), 1, GL_TRUE, planetNormalMatrix.m);
   glUniformMatrix4fv(glGetUniformLocation(planetShaderId, "viewMatrix"), 1, GL_TRUE, modelViewMatrix.m);
@@ -354,10 +360,10 @@ void drawObjects(GLuint shader)
   glUseProgram(planetShaderId);
 
   glUniform1f(glGetUniformLocation(planetShaderId, "shade"), 0.9); // dark
-  glUniform1i(glGetUniformLocation(planetShaderId, "TessLevelInner"), TessLevelInner);
-  glUniform1i(glGetUniformLocation(planetShaderId, "TessLevelOuter1"), TessLevelOuter1);
-  glUniform1i(glGetUniformLocation(planetShaderId, "TessLevelOuter2"), TessLevelOuter2);
-  glUniform1i(glGetUniformLocation(planetShaderId, "TessLevelOuter3"), TessLevelOuter3);
+  glUniform1f(glGetUniformLocation(planetShaderId, "TessLevelInner"), TessLevelInner);
+  glUniform1f(glGetUniformLocation(planetShaderId, "TessLevelOuter1"), TessLevelOuter1);
+  glUniform1f(glGetUniformLocation(planetShaderId, "TessLevelOuter2"), TessLevelOuter2);
+  glUniform1f(glGetUniformLocation(planetShaderId, "TessLevelOuter3"), TessLevelOuter3);
   glUniform1f(glGetUniformLocation(planetShaderId, "lod_factor"), lod_factor);
   glUniform1f(glGetUniformLocation(planetShaderId, "amplitude"), moonMountAmp);
   glUniform1f(glGetUniformLocation(planetShaderId, "frequency"), moonMountFreq);
@@ -366,6 +372,8 @@ void drawObjects(GLuint shader)
   glUniform3f(glGetUniformLocation(planetShaderId, "surfaceColor"), moonColor.x, moonColor.y, moonColor.z);
   glUniform3f(glGetUniformLocation(planetShaderId, "topColor"), moonTopColor.x, moonTopColor.y, moonTopColor.z);
   glUniform3f(glGetUniformLocation(planetShaderId, "floorColor"), moonFloorColor.x, moonFloorColor.y, moonFloorColor.z);
+  glUniform3f(glGetUniformLocation(planetShaderId, "camera"), p_camera.x, p_camera.y, p_camera.z);
+  glUniform1i(glGetUniformLocation(planetShaderId, "tessellationFactor"), tessellationFactor);
   glUniformMatrix4fv(glGetUniformLocation(planetShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
   glUniformMatrix3fv(glGetUniformLocation(planetShaderId, "normalMatrix"), 1, GL_TRUE, moonNormalMatrix.m);
   glUniformMatrix4fv(glGetUniformLocation(planetShaderId, "viewMatrix"), 1, GL_TRUE, modelViewMatrix.m);
@@ -480,56 +488,56 @@ void processNormalKeys(unsigned char key, int x, int y)
 
   switch(key) {
     case 'w': {
-      TessLevelInner += 1;
-      printf("TessLevelInner: %i\n", TessLevelInner);
+      TessLevelInner += 1.0;
+      printf("TessLevelInner: %f\n", TessLevelInner);
       break;
     }
     case 's': {
-      if(TessLevelInner > 1) {
-        TessLevelInner -= 1;
-        printf("TessLevelInner: %i\n", TessLevelInner);
+      if(TessLevelInner > 1.0) {
+        TessLevelInner -= 1.0;
+        printf("TessLevelInner: %f\n", TessLevelInner);
       }
       break;
     }
 
     //
     case '2': {
-      TessLevelOuter1 += 1;
-      printf("TessLevelOuter1: %i\n", TessLevelOuter1);
+      TessLevelOuter1 += 1.0;
+      printf("TessLevelOuter1: %f\n", TessLevelOuter1);
       break;
     }
     case '1': {
-      if(TessLevelOuter1 > 1) {
-        TessLevelOuter1 -= 1;
-        printf("TessLevelOuter1: %i\n", TessLevelOuter1);
+      if(TessLevelOuter1 > 1.0) {
+        TessLevelOuter1 -= 1.0;
+        printf("TessLevelOuter1: %f\n", TessLevelOuter1);
       }
       break;
     }
 
       //
     case '4': {
-      TessLevelOuter2 += 1;
-      printf("TessLevelOuter2: %i\n", TessLevelOuter2);
+      TessLevelOuter2 += 1.0;
+      printf("TessLevelOuter2: %f\n", TessLevelOuter2);
       break;
     }
     case '3': {
-      if(TessLevelOuter2 > 1) {
-        TessLevelOuter2 -= 1;
-        printf("TessLevelOuter2: %i\n", TessLevelOuter2);
+      if(TessLevelOuter2 > 1.0) {
+        TessLevelOuter2 -= 1.0;
+        printf("TessLevelOuter2: %f\n", TessLevelOuter2);
       }
       break;
     }
 
     //
     case '6': {
-      TessLevelOuter3 += 1;
-      printf("TessLevelOuter3: %i\n", TessLevelOuter3);
+      TessLevelOuter3 += 1.0;
+      printf("TessLevelOuter3: %f\n", TessLevelOuter3);
       break;
     }
     case '5': {
-      if(TessLevelOuter3 > 1) {
-        TessLevelOuter3 -= 1;
-        printf("TessLevelOuter3: %i\n", TessLevelOuter3);
+      if(TessLevelOuter3 > 1.0) {
+        TessLevelOuter3 -= 1.0;
+        printf("TessLevelOuter3: %f\n", TessLevelOuter3);
       }
       break;
     }
@@ -570,6 +578,19 @@ void processNormalKeys(unsigned char key, int x, int y)
       }
       break;
     }
+
+    case 'n': {
+      tessellationFactor += 10;
+      printf("\n tessellationFactor: %i", tessellationFactor);
+      break;
+    }
+    case 'm': {
+      if(tessellationFactor >= 10) {
+        tessellationFactor -= 10;
+        printf("\n tessellationFactor: %i", tessellationFactor);
+      }
+      break;
+    }
     default:break;
   }
 }
@@ -600,7 +621,7 @@ int main(int argc, char *argv[])
   glutReshapeFunc(reshape);
 
   glutRepeatingTimerFunc(20); // MicroGlut only
-//  glutKeyboardFunc(processNormalKeys); //disable this to get zpr to work
+  glutKeyboardFunc(processNormalKeys); //disable this to get zpr to work
   glutMainLoop();
   exit(0);
 }

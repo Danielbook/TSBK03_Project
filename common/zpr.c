@@ -34,6 +34,11 @@ static int lastX = 300, lastY = 300;
 
 //------------------------------------------------------------------------------
 
+vec3 newCameraPosition(void)
+{
+  return camera;
+}
+
 void updateCameraMatrix(mat4 *matrix)
 {
     if (matrix != NULL)

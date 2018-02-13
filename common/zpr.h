@@ -44,6 +44,7 @@ void updateCameraMatrix(mat4 *matrix);    // matrix is passed as a parameter whe
 void zprMouse(int button, int state, int x, int y);  // records mouse buttons' state
 void zprKey(unsigned char key, int x, int y); // camera control with keys. Updates viewMatrix
 void zprMouseFunc(int x, int y);
+vec3 newCameraPosition(void);
 
 #ifdef __cplusplus
 }
