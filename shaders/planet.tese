@@ -17,5 +17,7 @@ void main()
   vec3 n2 = gl_TessCoord.z * tcNormal[2];
 
   teNormal = n0 + n1 + n2; // Sum with weights from the barycentric coords any way we like
+
+  // Normalize to push new vertices onto the sphere's surface
   gl_Position = vec4(normalize(p0 + p1 + p2), 1.0);
 }

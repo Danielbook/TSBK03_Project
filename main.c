@@ -455,6 +455,7 @@ void renderScene(void)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   //Using the projTex shader
+  //Save shadow textures to our planetShader
   glUseProgram(planetShaderId);
   glUniform1i(planetShaderUniform, TEX_UNIT);
   glActiveTexture(GL_TEXTURE0 + TEX_UNIT);
@@ -621,7 +622,7 @@ int main(int argc, char *argv[])
   glutReshapeFunc(reshape);
 
   glutRepeatingTimerFunc(20); // MicroGlut only
-  glutKeyboardFunc(processNormalKeys); //disable this to get zpr to work
+//  glutKeyboardFunc(processNormalKeys); //disable this to get zpr to work
   glutMainLoop();
   exit(0);
 }
