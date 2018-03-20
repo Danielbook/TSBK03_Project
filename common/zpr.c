@@ -34,6 +34,11 @@ static int lastX = 300, lastY = 300;
 
 //------------------------------------------------------------------------------
 
+vec3 newCameraPosition(void)
+{
+  return camera;
+}
+
 void updateCameraMatrix(mat4 *matrix)
 {
     if (matrix != NULL)
@@ -119,6 +124,7 @@ void zprMouseFunc(int x, int y)
 
 void zprKey(unsigned char key, int x, int y)
 {
+  mat4 tMat;
   float speed = 0.3, rotSpeed = 0.3;
     GLfloat speedX = 0, speedY = 0, speedZ = 0,
     angle = 0.0,

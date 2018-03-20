@@ -17,39 +17,64 @@
 #include "LoadTGA.h"
 
 // initial width and heights
-#define W 1000
-#define H 1000
+#define RENDER_WIDTH 1000
+#define RENDER_HEIGHT 1000
+
+#define TEX_UNIT 0
 
 // Projection matrix, set by a call to perspective().
 mat4 projectionMatrix;
-mat4 viewMatrix;
+mat4 modelViewMatrix, textureMatrix;
 
 Point3D cam, point;
 
 // * Model(s)
-Model *sphere;
+Model *sphere, *icoM;
 // * Reference(s) to shader program(s)
-GLuint planetShader, sunShader, oceanShader;
+GLuint planetShaderId, sunShaderId, oceanShaderId, moonShaderId, atmosphereShaderId;
+// Use to activate/disable projTexShader
+GLuint planetShaderUniform;
+
+FBOstruct *fbo;
+
+//Light mouvement circle radius
+float light_mvnt = 40.0f; // At 30 we get edge artifacts
+
+//Light position
+Point3D p_light = {0, 0, 0};
+
+//Light lookAt, Cube map here for point light???
+Point3D l_light = {1, 0, 0};
+//Point3D l_light = {0, 1, 0};
+//Point3D l_light = {0, 0, 1};
+//Point3D l_light = {-1, 0, 0};
+//Point3D l_light = {0, -1, 0};
+//Point3D l_light = {0, 0, -1};
+
+//Camera position
+Point3D p_camera = {0, 3, 8};
+
+//Camera lookAt
+Point3D l_camera = {0, 0, 0};
+
 // * Texture(s)
 GLuint texture;
 
-GLuint data[3];
-
 GLfloat a;
+
+GLint aPlanet;
+
+GLfloat TessLevelInner = 10.0;
+GLfloat TessLevelOuter1 = 10.0;
+GLfloat TessLevelOuter2 = 10.0;
+GLfloat TessLevelOuter3 = 10.0;
+GLfloat mountAmp = 0.1f;
+GLfloat mountFreq = 2.0f;
+GLfloat lod_factor = 1.0f;
+GLint  tessellationFactor = 60;
 
 int frame = 0, time, timebase = 0, deltaTime = 0, startTime = 0, nVertices = 0;
 
-typedef struct
-{
-    int triangle[3];
-} triangleArray;
-
-typedef struct
-{
-    float vertex[3];
-} vertexArray;
-
-float vertArray;
 // This function is called whenever the computer is idle
 // As soon as the machine is idle, ask GLUT to trigger rendering of a new frame
 void onTimer(int value)
@@ -58,294 +83,393 @@ void onTimer(int value)
   glutTimerFunc(5, &onTimer, value);
 }
 
-triangleArray *triangles = NULL;
-vertexArray *vertices = NULL;
+void loadShadowShaders()
+{
+  // Load and compile shaders
+  planetShaderId = loadShadersGT("../shaders/planet.vert", "../shaders/planet.frag", "../shaders/planet.geom", "../shaders/planet.tesc", "../shaders/planet.tese");
+  planetShaderUniform = glGetUniformLocation(planetShaderId, "textureUnit");
+  sunShaderId = loadShaders("../shaders/sun.vert", "../shaders/sun.frag");
+  oceanShaderId = loadShaders("../shaders/ocean.vert", "../shaders/ocean.frag");
+  atmosphereShaderId = loadShaders("../shaders/atmosphere.vert", "../shaders/atmosphere.frag");
+  moonShaderId = loadShaders("../shaders/moon.vert", "../shaders/moon.frag");
 
+  printError("init shader");
+}
+
+GLfloat groundcolor[] = {0.3f, 0.3f, 0.3f, 1};
+GLfloat ground[] = {
+        -5000, 0, -5000,
+        -5000, 0, 5000,
+        5000, 0, 5000,
+        5000, 0, -5000
+};
+
+GLuint groundIndices[] = {0, 1, 2, 0, 2, 3};
+
+Model *groundModel;
+
+GLsizei icoIndexCount;
+
+GLuint icoFaces[] = {
+        2, 1, 0,
+        3, 2, 0,
+        4, 3, 0,
+        5, 4, 0,
+        1, 5, 0,
+
+        11, 6,  7,
+        11, 7,  8,
+        11, 8,  9,
+        11, 9,  10,
+        11, 10, 6,
+
+        1, 2, 6,
+        2, 3, 7,
+        3, 4, 8,
+        4, 5, 9,
+        5, 1, 10,
+
+        2,  7, 6,
+        3,  8, 7,
+        4,  9, 8,
+        5, 10, 9,
+        1, 6, 10 };
+
+GLfloat icoVerts[] = {
+        0.000f,  0.000f,  1.000f,
+        0.894f,  0.000f,  0.447f,
+        0.276f,  0.851f,  0.447f,
+        -0.724f,  0.526f,  0.447f,
+        -0.724f, -0.526f,  0.447f,
+        0.276f, -0.851f,  0.447f,
+        0.724f,  0.526f, -0.447f,
+        -0.276f,  0.851f, -0.447f,
+        -0.894f,  0.000f, -0.447f,
+        -0.276f, -0.851f, -0.447f,
+        0.724f, -0.526f, -0.447f,
+        0.000f,  0.000f, -1.000f };
+
+static const GLuint PositionSlot = 0;
 
 void init(void)
 {
   dumpInfo();
 
+  // The shader must be loaded before this is called!
+  if (planetShaderId == 0)
+    printf("Warning! Is the shader not loaded?\n");
+
   // GL inits
-  glClearColor(0.0, 0.0, 0.0, 0);
-  glEnable(GL_DEPTH_TEST);
-  glEnable(GL_CULL_FACE);
-  projectionMatrix = frustum(-1, 1, -1, 1, 1.0, 1000.0);
+//  projectionMatrix = perspective(90, RENDER_WIDTH / RENDER_HEIGHT, 1.0, 4000);
+  projectionMatrix = perspective(30, RENDER_WIDTH/RENDER_HEIGHT, 0.1, 1000);
+//  projectionMatrix = frustum(-1.0f, +1.0f, -1.0f, +1.0f, 1.0, 250);
   printError("GL inits");
-
-  // Load and compile shaders
-  planetShader = loadShadersG("../shaders/planet.vert", "../shaders/planet.frag", "../shaders/planet.geom");
-  sunShader = loadShaders("../shaders/sun.vert", "../shaders/sun.frag");
-  oceanShader = loadShaders("../shaders/ocean.vert", "../shaders/ocean.frag");
-
-  printError("init shader");
 
   // Upload geometry to the GPU:
   sphere = LoadModelPlus("../assets/bestSphere.obj"); // Sphere
 
-  int trianglesSize = sphere->numIndices / 3;
+  icoM = LoadModelPlus("../assets/ico.obj"); // Sphere
 
-  triangles = malloc(sizeof(triangleArray) * trianglesSize);
-
-  for (int i = 0; i < sphere->numIndices; i += 3) {
-    triangles[i].triangle[0] = sphere->indexArray[i];
-    triangles[i].triangle[1] = sphere->indexArray[i + 1];
-    triangles[i].triangle[2] = sphere->indexArray[i + 2];
-
-//    printf("Triangle: %i: ", i / 3 + 1);
-//    printf("(%i, ", triangles[sphere->numIndices / 3].triangle[0]);
-//    printf("%i, ", triangles[sphere->numIndices / 3].triangle[1]);
-//    printf("%i)\n", triangles[sphere->numIndices / 3].triangle[2]);
-  }
-
-    nVertices = sphere->numVertices;
-    vertices = malloc(sizeof(vertexArray) * nVertices);
-
-    
-    for (int i = 0; i < nVertices; i+=3) {
-        vertices[i].vertex[0] = sphere->vertexArray[i];
-        vertices[i+1].vertex[1] = sphere->vertexArray[i+1];
-        vertices[i+2].vertex[2] = sphere->vertexArray[i+2];
-
-//        printf("(%f, ", vertices[i].vertex[0]);
-//        printf("%f, ", vertices[i+1].vertex[1]);
-//        printf("%f)\n", vertices[i+2].vertex[2]);
-  }
-
-  for(int i = 0; i < 1; i++) {
-    for(int j = 0; j < trianglesSize; j++) {
-      // Edge 1
-      if(triangles[i].triangle[0] == triangles[j].triangle[0] && triangles[i].triangle[1] == triangles[j].triangle[1] ||
-         triangles[i].triangle[0] == triangles[j].triangle[1] && triangles[i].triangle[1] == triangles[j].triangle[2] ||
-         triangles[i].triangle[0] == triangles[j].triangle[2] && triangles[i].triangle[1] == triangles[j].triangle[0]) {
-
-        printf("Case 1!\n");
-        printf("Triangle %i: ", i);
-        printf("{%i, ", triangles[i].triangle[0]);
-        printf("%i, ", triangles[i].triangle[1]);
-        printf("%i}\n",triangles[i].triangle[2]);
-
-        printf("Triangle %i: ", j);
-        printf("{%i, ", triangles[j].triangle[0]);
-        printf("%i, ", triangles[j].triangle[1]);
-        printf("%i}\n",triangles[j].triangle[2]);
-
-        printf("Unique vertice: %i", triangles[j].triangle[0]);
-        printf("\n");
-      }
-      // Edge 2
-      if(triangles[i].triangle[1] == triangles[j].triangle[1] && triangles[i].triangle[2] == triangles[j].triangle[2] ||
-         triangles[i].triangle[1] == triangles[j].triangle[2] && triangles[i].triangle[2] == triangles[j].triangle[0] ||
-         triangles[i].triangle[1] == triangles[j].triangle[0] && triangles[i].triangle[2] == triangles[j].triangle[1]) {
-
-        printf("Case 2!\n");
-        printf("Triangle %i: ", i);
-        printf("{%i, ", triangles[i].triangle[0]);
-        printf("%i, ", triangles[i].triangle[1]);
-        printf("%i}\n",triangles[i].triangle[2]);
-
-        printf("Triangle %i: ", j);
-        printf("{%i, ", triangles[j].triangle[0]);
-        printf("%i, ", triangles[j].triangle[1]);
-        printf("%i}\n",triangles[j].triangle[2]);
-
-        printf("Unique vertice: %i", triangles[j].triangle[1]);
-        printf("\n");
-      }
-      // Edge 3
-      if(triangles[i].triangle[2] == triangles[j].triangle[2] && triangles[i].triangle[0] == triangles[j].triangle[0] ||
-         triangles[i].triangle[2] == triangles[j].triangle[1] && triangles[i].triangle[0] == triangles[j].triangle[2] ||
-         triangles[i].triangle[2] == triangles[j].triangle[0] && triangles[i].triangle[0] == triangles[j].triangle[1]) {
-
-        printf("Case 3!\n");
-        printf("Triangle %i: ", i);
-        printf("{%i, ", triangles[i].triangle[0]);
-        printf("%i, ", triangles[i].triangle[1]);
-        printf("%i}\n",triangles[i].triangle[2]);
-
-        printf("Triangle %i: ", j);
-        printf("{%i, ", triangles[j].triangle[0]);
-        printf("%i, ", triangles[j].triangle[1]);
-        printf("%i}\n",triangles[j].triangle[2]);
-
-        printf("Unique vertice: %i", triangles[j].triangle[2]);
-        printf("\n");
-      }
-    }
-  }
+  groundModel = LoadDataToModel(
+          ground,
+          NULL,
+          NULL,
+          NULL,
+          groundIndices,
+          4,
+          6);
 
 
   printError("load models");
 
   glutTimerFunc(5, &onTimer, 0);
 
-  cam = SetVector(0, 300, 100);
-  point = SetVector(0, 1, 0);
+  cam = SetVector(p_camera.x, p_camera.y, p_camera.z);
+  point = SetVector(l_camera.x, l_camera.y, l_camera.z);
 
-  zprInit(&viewMatrix, cam, point);
+  zprInit(&modelViewMatrix, cam, point);
 }
 
-void display(void)
+void updatePositions()
 {
-  printError("pre display");
+  p_light.x = light_mvnt * cos(glutGet(GLUT_ELAPSED_TIME) / 1000.0);
+  p_light.z = light_mvnt * sin(glutGet(GLUT_ELAPSED_TIME) / 1000.0);
+}
 
-  // clear the screen
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+void drawIco(void)
+{
+  icoIndexCount = sizeof(icoFaces) / sizeof(icoFaces[0]);
 
-  a += 0.01;
+  // Create the VAO:
+  GLuint vao;
+  glGenVertexArrays(1, &vao);
+  glBindVertexArray(vao);
+
+  // Create the VBO for positions:
+  GLuint positions;
+  GLsizei stride = 3 * sizeof(float);
+  glGenBuffers(1, &positions);
+  glBindBuffer(GL_ARRAY_BUFFER, positions);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(icoVerts), icoVerts, GL_STATIC_DRAW);
+  glEnableVertexAttribArray(PositionSlot);
+  glVertexAttribPointer(PositionSlot, 3, GL_FLOAT, GL_FALSE, stride, 0);
+
+  // Create the VBO for indices:
+  GLuint indices;
+  glGenBuffers(1, &indices);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(icoFaces), icoFaces, GL_STATIC_DRAW);
+
+  // Render the scene:
+  glPatchParameteri(GL_PATCH_VERTICES, 3);
+  glDrawElements(GL_PATCHES, icoIndexCount, GL_UNSIGNED_INT, 0);
+  glBindVertexArray(NULL);
+}
+
+
+void drawObjects(GLuint shader)
+{
+  mat4 planetTransl, planetRot, planetTransform;
+  mat4 sunTransl, sunRot, sunTransform;
+  mat4 oceanTransform;
+  mat4 atmosphereTransform;
+  mat4 moonTransl, moonRot, moonTransform;
+  mat4 mv2, tx2;
+
+  p_camera = newCameraPosition();
 
   time = glutGet(GLUT_ELAPSED_TIME);
 
   deltaTime = time - startTime;
   startTime = time;
 
-//  frame++;
+//  glUniformMatrix4fv(glGetUniformLocation(projTexShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
 //
-//    // Print FPS
-//    if (time - timebase > 1000) {
-//        printf("FPS: %4.2f\n", frame * 1000.0 / (time - timebase));
-//        timebase = time;
-//        frame = 0;
-//    }
+//  mat4 planeTransform = Mult(Rz(M_PI/2), T(0, -1000, 0));
+//  mv2 = Mult(modelViewMatrix, planeTransform);
+//  tx2 = Mult(textureMatrix, planeTransform);
+//
+//  // Ground
+//  glUniform1f(glGetUniformLocation(projTexShaderId, "shade"), 0.2); // Dark ground
+//  glUniformMatrix4fv(glGetUniformLocation(projTexShaderId, "modelViewMatrix"), 1, GL_TRUE, mv2.m);
+//  glUniformMatrix4fv(glGetUniformLocation(projTexShaderId, "textureMatrix"), 1, GL_TRUE, tx2.m);
+//  DrawModel(groundModel, projTexShaderId, "inPosition", NULL, NULL);
+//
+//  glUniform1f(glGetUniformLocation(projTexShaderId, "shade"), 0.9); // Brighter objects
 
-  mat4 sunPos, planetPos, planetRotPos, planetOcean;
-
-  float b = -a * 2;
-  float c = a * 5;
-  float d = a * 15;
-  float rm = 0.5;
-
-  // Calculate matrices in matrix sequences that impose the dependencies.
-//  viewMatrix = lookAt(0, 2, 4,  // Camera is set in in World Space
-//                      0, 0, 0,  // and looks at the origin
-//                      0, 1, 0); // Head is up
-  sunPos = Mult(viewMatrix, T(0, 0, 0));
-  planetPos = Mult(sunPos, Mult(Ry(0), T(200, 0, 0))); // Planet position
-  planetRotPos = Mult(planetPos, Mult(Ry(0), S(0.4, 0.4, 0.4))); // Planet pos + rotation
-  planetOcean = Mult(planetRotPos, S(0.97, 0.97, 0.97)); // Planet pos + rotation
-
-//  printMat4(planetRotPos);
-
-  // Enable Z-buffering
-  glEnable(GL_DEPTH_TEST);
-  // Enable backface culling
-  glEnable(GL_CULL_FACE);
-  glCullFace(GL_BACK);
-
-  // SUN
-  const float sunAmp = 0.1;
-  const float sunFreq = 80;
-  mat3 sunNormalMatrix = InverseTranspose(sunPos);
-
-  glUseProgram(sunShader);
-  glUniform1f(glGetUniformLocation(sunShader, "amplitude"), sunAmp);
-  glUniform1f(glGetUniformLocation(sunShader, "frequency"), sunFreq);
-  glUniform1f(glGetUniformLocation(sunShader, "time"), time);
-  glUniformMatrix4fv(glGetUniformLocation(sunShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
-  glUniformMatrix4fv(glGetUniformLocation(sunShader, "modelViewMatrix"), 1, GL_TRUE, sunPos.m);
-  glUniformMatrix4fv(glGetUniformLocation(sunShader, "normalMatrix"), 1, GL_TRUE, sunNormalMatrix.m);
-
-  DrawModel(sphere, sunShader, "inPosition", "inNormal", NULL);
-
-  // PLANET
-  const float mountAmp = 20;
-  const float mountFreq = 0.03;
+  //// PLANET
   const float avgTemp = 7.0;
 
-  vec4 lightPosition = {0.0, 0.0, 0.0, 1.0};
   vec3 surfaceColor = {0.0, 0.4, 0.1};
   vec3 snowColor = {0.8, 0.9, 1.0};
   vec3 sandColor = {0.95, 0.67, 0.26};
 
-  mat3 planetNormalMatrix = InverseTranspose(planetRotPos);
+  planetTransl = Mult(Ry(0), T(2, 0, 0)); // Planet translation
+  planetRot = Mult(Ry(time*0.0004), S(1.0, 1.0, 1.0)); // Planet Rotation
+  planetTransform = Mult(planetTransl, planetRot); // Planet transform
+
+  mv2 = Mult(modelViewMatrix, planetTransform);
+  tx2 = Mult(textureMatrix, planetTransform);
+  mat3 planetNormalMatrix = InverseTranspose(mv2);
 
 
-  /*
-   *  Testing sending data to gs with VAO
-   */
+  glUseProgram(planetShaderId);
 
-  vec3 tempColor = {1.0, 0.0, 0.0};
-  //Soon-to-be vertex data that will be passed to shaders
-  data[0] = tempColor.x;
-  data[1] = tempColor.y;
-  data[2] = tempColor.z;
+  glUniform1f(glGetUniformLocation(planetShaderId, "shade"), 0.2); // dark
+  glUniform1f(glGetUniformLocation(planetShaderId, "TessLevelInner"), TessLevelInner);
+  glUniform1f(glGetUniformLocation(planetShaderId, "TessLevelOuter1"), TessLevelOuter1);
+  glUniform1f(glGetUniformLocation(planetShaderId, "TessLevelOuter2"), TessLevelOuter2);
+  glUniform1f(glGetUniformLocation(planetShaderId, "TessLevelOuter3"), TessLevelOuter3);
+  glUniform1f(glGetUniformLocation(planetShaderId, "lod_factor"), lod_factor);
+  glUniform1f(glGetUniformLocation(planetShaderId, "amplitude"), mountAmp);
+  glUniform1f(glGetUniformLocation(planetShaderId, "frequency"), mountFreq);
+  glUniform1f(glGetUniformLocation(planetShaderId, "avgTemp"), avgTemp);
+  glUniform3f(glGetUniformLocation(planetShaderId, "lightPosition"), p_light.x, p_light.y, p_light.z);
+  glUniform3f(glGetUniformLocation(planetShaderId, "surfaceColor"), surfaceColor.x, surfaceColor.y, surfaceColor.z);
+  glUniform3f(glGetUniformLocation(planetShaderId, "topColor"), snowColor.x, snowColor.y, snowColor.z);
+  glUniform3f(glGetUniformLocation(planetShaderId, "floorColor"), sandColor.x, sandColor.y, sandColor.z);
+  glUniform3f(glGetUniformLocation(planetShaderId, "camera"), p_camera.x, p_camera.y, p_camera.z);
+  glUniform1i(glGetUniformLocation(planetShaderId, "tessellationFactor"), tessellationFactor);
+  glUniformMatrix4fv(glGetUniformLocation(planetShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+  glUniformMatrix3fv(glGetUniformLocation(planetShaderId, "normalMatrix"), 1, GL_TRUE, planetNormalMatrix.m);
+  glUniformMatrix4fv(glGetUniformLocation(planetShaderId, "viewMatrix"), 1, GL_TRUE, modelViewMatrix.m);
+  glUniformMatrix4fv(glGetUniformLocation(planetShaderId, "modelViewMatrix"), 1, GL_TRUE, mv2.m);
+  glUniformMatrix4fv(glGetUniformLocation(planetShaderId, "textureMatrix"), 1, GL_TRUE, tx2.m);
 
-  //Create VAO
-  GLuint vao = 0;
-  glGenVertexArrays(1, &vao);
-  glBindVertexArray(vao);
-  glBindBuffer(GL_ARRAY_BUFFER, data);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL); //(locationId, size, type, normalizedBool, .., ..)
+  drawIco();
 
-  //Enable VAO
-  glEnableVertexAttribArray(0); //Same locationID as the VAO-pointer above
+  glUniform1f(glGetUniformLocation(planetShaderId, "shade"), 0.9); // brighter objects
 
-  //Create VBO
-//  GLuint a_vbo = 0;
-//  glGenBuffers(1, &a_vbo);
-//  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, a_vbo);
-//  glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * sizeof(float), &data, GL_STATIC_DRAW );
+  ////   SUN
+  const float sunAmp = 0.09;
+  const float sunFreq = 0.04;
 
+  sunTransl = Mult(Ry(0), T(0, 0, 0));
+  sunRot = Mult(Ry(time*0.0002), S(0.01, 0.01, 0.01));
+  sunTransform = Mult(sunTransl, sunRot);
 
+  mv2 = Mult(modelViewMatrix, sunTransform);
+  tx2 = Mult(textureMatrix, sunTransform);
+  mat3 sunNormalMatrix = InverseTranspose(mv2);
 
+  glUseProgram(sunShaderId);
+  glUniform1f(glGetUniformLocation(sunShaderId, "amplitude"), sunAmp);
+  glUniform1f(glGetUniformLocation(sunShaderId, "frequency"), sunFreq);
+  glUniform1f(glGetUniformLocation(sunShaderId, "time"), time);
+  glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+  glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "modelViewMatrix"), 1, GL_TRUE, mv2.m);
+  glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "normalMatrix"), 1, GL_TRUE, sunNormalMatrix.m);
+//  glUniformMatrix4fv(glGetUniformLocation(sunShaderId, "textureMatrix"), 1, GL_TRUE, tx2.m);
 
-  glUseProgram(planetShader);
-  glUniform1f(glGetUniformLocation(planetShader, "amplitude"), mountAmp);
-  glUniform1f(glGetUniformLocation(planetShader, "frequency"), mountFreq);
-  glUniform1f(glGetUniformLocation(planetShader, "avgTemp"), avgTemp);
-  glUniform4f(glGetUniformLocation(planetShader, "lightPosition"), lightPosition.x, lightPosition.y, lightPosition.z,
-              lightPosition.w);
-  glUniform3f(glGetUniformLocation(planetShader, "surfaceColor"), surfaceColor.x, surfaceColor.y, surfaceColor.z);
-  glUniform3f(glGetUniformLocation(planetShader, "snowColor"), snowColor.x, snowColor.y, snowColor.z);
-  glUniform3f(glGetUniformLocation(planetShader, "sandColor"), sandColor.x, sandColor.y, sandColor.z);
-  glUniformMatrix4fv(glGetUniformLocation(planetShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
-  glUniformMatrix4fv(glGetUniformLocation(planetShader, "viewMatrix"), 1, GL_TRUE, viewMatrix.m);
-  glUniformMatrix3fv(glGetUniformLocation(planetShader, "normalMatrix"), 1, GL_TRUE, planetNormalMatrix.m);
-  glUniformMatrix4fv(glGetUniformLocation(planetShader, "modelViewMatrix"), 1, GL_TRUE, planetRotPos.m);
-  glUniform1fv(glGetUniformLocation(planetShader, "vertices"), nVertices, vertices);
+//  drawIco();
+  DrawModel(sphere, sunShaderId, "inPosition", "inNormal", NULL);
 
+//  // Atmosphere
+//  atmosphereTransform = Mult(planetTransform, S(0.015, 0.015, 0.015)); // Planet pos + rotation
+//  mv2 = Mult(modelViewMatrix, atmosphereTransform);
+//  tx2 = Mult(textureMatrix, atmosphereTransform);
+//  mat3 atmosphereNormalMatrix = InverseTranspose(mv2);
+//
+//  glUseProgram(atmosphereShaderId);
+//  glUniform1f(glGetUniformLocation(atmosphereShaderId, "time"), time);
+//  glUniform1f(glGetUniformLocation(atmosphereShaderId, "atmosphereOpacity"), 0.001);
+//  glUniform3f(glGetUniformLocation(atmosphereShaderId, "lightPosition"), p_light.x, p_light.y, p_light.z);
+//  glUniformMatrix3fv(glGetUniformLocation(atmosphereShaderId, "normalMatrix"), 1, GL_TRUE, atmosphereNormalMatrix.m);
+//  glUniformMatrix4fv(glGetUniformLocation(atmosphereShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+//  glUniformMatrix4fv(glGetUniformLocation(atmosphereShaderId, "viewMatrix"), 1, GL_TRUE, modelViewMatrix.m);
+//  glUniformMatrix4fv(glGetUniformLocation(atmosphereShaderId, "modelViewMatrix"), 1, GL_TRUE, mv2.m);
+//  glUniformMatrix4fv(glGetUniformLocation(atmosphereShaderId, "textureMatrix"), 1, GL_TRUE, tx2.m);
+//
+//  DrawModel(sphere, atmosphereShaderId, "inPosition", "inNormal", NULL);
 
-//  DrawModel(sphere, planetShader, "inPosition", "inNormal", NULL);
+  // Moon
+  vec3 moonColor = {0.82, 0.82, 0.825};
+  vec3 moonTopColor = {0.8, 0.8, 0.8};
+  vec3 moonFloorColor = {0.2, 0.2, 0.2};
+  const float moonMountFreq = 0.04;
+  const float moonMountAmp = 0.09;
 
-  /*
-   * Stencil testing
-   * http://ogldev.atspace.co.uk/www/tutorial40/tutorial40.html
-  */
+  moonTransl = Mult(Mult(Rz(0), Ry(time*0.001)), T(-1, 0, 0)); // Translation
+  moonRot = Mult(Ry(0), S(0.2, 0.2, 0.2)); // Rotation
+  moonTransform = Mult(planetTransl, Mult(moonTransl, moonRot));
 
-  // Clear the screen to white
-//  glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+  mv2 = Mult(modelViewMatrix, moonTransform);
+  tx2 = Mult(textureMatrix, moonTransform);
+  mat3 moonNormalMatrix = InverseTranspose(mv2);
 
-  glEnable(GL_DEPTH_TEST);
-  glEnable(GL_STENCIL_TEST);
+  glUseProgram(planetShaderId);
 
-  glStencilFunc(GL_ALWAYS, 0, 0xFF); // init to 0, camera is not in shadowed area
+  glUniform1f(glGetUniformLocation(planetShaderId, "shade"), 0.9); // dark
+  glUniform1f(glGetUniformLocation(planetShaderId, "TessLevelInner"), TessLevelInner);
+  glUniform1f(glGetUniformLocation(planetShaderId, "TessLevelOuter1"), TessLevelOuter1);
+  glUniform1f(glGetUniformLocation(planetShaderId, "TessLevelOuter2"), TessLevelOuter2);
+  glUniform1f(glGetUniformLocation(planetShaderId, "TessLevelOuter3"), TessLevelOuter3);
+  glUniform1f(glGetUniformLocation(planetShaderId, "lod_factor"), lod_factor);
+  glUniform1f(glGetUniformLocation(planetShaderId, "amplitude"), moonMountAmp);
+  glUniform1f(glGetUniformLocation(planetShaderId, "frequency"), moonMountFreq);
+  glUniform1f(glGetUniformLocation(planetShaderId, "avgTemp"), avgTemp);
+  glUniform3f(glGetUniformLocation(planetShaderId, "lightPosition"), p_light.x, p_light.y, p_light.z);
+  glUniform3f(glGetUniformLocation(planetShaderId, "surfaceColor"), moonColor.x, moonColor.y, moonColor.z);
+  glUniform3f(glGetUniformLocation(planetShaderId, "topColor"), moonTopColor.x, moonTopColor.y, moonTopColor.z);
+  glUniform3f(glGetUniformLocation(planetShaderId, "floorColor"), moonFloorColor.x, moonFloorColor.y, moonFloorColor.z);
+  glUniform3f(glGetUniformLocation(planetShaderId, "camera"), p_camera.x, p_camera.y, p_camera.z);
+  glUniform1i(glGetUniformLocation(planetShaderId, "tessellationFactor"), tessellationFactor);
+  glUniformMatrix4fv(glGetUniformLocation(planetShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+  glUniformMatrix3fv(glGetUniformLocation(planetShaderId, "normalMatrix"), 1, GL_TRUE, moonNormalMatrix.m);
+  glUniformMatrix4fv(glGetUniformLocation(planetShaderId, "viewMatrix"), 1, GL_TRUE, modelViewMatrix.m);
+  glUniformMatrix4fv(glGetUniformLocation(planetShaderId, "modelViewMatrix"), 1, GL_TRUE, mv2.m);
+  glUniformMatrix4fv(glGetUniformLocation(planetShaderId, "textureMatrix"), 1, GL_TRUE, tx2.m);
 
-  //Increment stencil when entering object
-  glCullFace(GL_FRONT);
-  glStencilOp(GL_KEEP, GL_INCR, GL_KEEP);
+  drawIco();
 
-  //Decrement stencil when exiting object
+//  // Ocean
+//  vec3 oceanColor = {0, 11 / 255, 255 / 255};
+//  oceanTransform = Mult(planetTransform, S(1.0, 1.0, 1.0)); // Planet pos + rotation
+//  mv2 = Mult(modelViewMatrix, oceanTransform);
+//  tx2 = Mult(textureMatrix, oceanTransform);
+//  mat3 oceanNormalMatrix = InverseTranspose(mv2);
+//
+//  glUseProgram(oceanShaderId);
+//  glUniform1f(glGetUniformLocation(oceanShaderId, "time"), time);
+//  glUniform3f(glGetUniformLocation(oceanShaderId, "lightPosition"), p_light.x, p_light.y, p_light.z);
+//  glUniform1f(glGetUniformLocation(oceanShaderId, "avgTemp"), avgTemp);
+//  glUniform3f(glGetUniformLocation(oceanShaderId, "oceanColor"), oceanColor.x, oceanColor.y, oceanColor.z);
+//  glUniformMatrix3fv(glGetUniformLocation(oceanShaderId, "normalMatrix"), 1, GL_TRUE, oceanNormalMatrix.m);
+//  glUniformMatrix4fv(glGetUniformLocation(oceanShaderId, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+//  glUniformMatrix4fv(glGetUniformLocation(oceanShaderId, "viewMatrix"), 1, GL_TRUE, modelViewMatrix.m);
+//  glUniformMatrix4fv(glGetUniformLocation(oceanShaderId, "modelViewMatrix"), 1, GL_TRUE, mv2.m);
+//  glUniformMatrix4fv(glGetUniformLocation(oceanShaderId, "textureMatrix"), 1, GL_TRUE, tx2.m);
+//
+//  DrawModel(sphere, oceanShaderId, "inPosition", "inNormal", NULL);
+}
+
+void setTextureMatrix(void)
+{
+  mat4 scaleBiasMatrix;
+
+  textureMatrix = IdentityMatrix();
+
+// Scale and bias transform, moving from unit cube [-1,1] to [0,1]
+  scaleBiasMatrix = Mult(T(0.5, 0.5, 0.0), S(0.5, 0.5, 1.0));
+  textureMatrix = Mult(Mult(scaleBiasMatrix, projectionMatrix), modelViewMatrix);
+  // Multiply modelview and transformation matrices
+}
+
+void renderScene(void)
+{
+  printError("Render Scene");
+
+//  updatePositions();
+
+  // Setup the modelview from the light source
+  modelViewMatrix = lookAt(p_light.x, p_light.y, p_light.z,
+                      l_light.x, l_light.y, l_light.z, 0, 1, 0);
+
+  setTextureMatrix();
+
+  // 1. Render scene to FBO
+  useFBO(fbo, NULL, NULL);
+  glViewport(0, 0, RENDER_WIDTH, RENDER_HEIGHT);
+  glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_TRUE); // Depth only
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  //Using the simple shader
+  glUseProgram(planetShaderId);
+  glUniform1i(planetShaderUniform, TEX_UNIT);
+  glActiveTexture(GL_TEXTURE0 + TEX_UNIT);
+  glBindTexture(GL_TEXTURE_2D, 0);
   glCullFace(GL_BACK);
-  glStencilOp(GL_KEEP, GL_DECR, GL_KEEP);
+  drawObjects(planetShaderId);
 
-  DrawModel(sphere, planetShader, "inPosition", "inNormal", NULL);
+  //2. Render from camera.
+  // Now rendering from the camera POV
 
-  glDisable(GL_STENCIL_TEST);
+  useFBO(NULL, fbo, NULL);
 
-  // Ocean
-  vec3 oceanColor = {0, 11 / 255, 255 / 255};
+  glViewport(0, 0, RENDER_WIDTH, RENDER_HEIGHT);
 
-  glUseProgram(oceanShader);
-  glUniform1f(glGetUniformLocation(oceanShader, "time"), time);
-  glUniform4f(glGetUniformLocation(oceanShader, "lightPosition"), lightPosition.x, lightPosition.y, lightPosition.z,
-              lightPosition.w);
-  glUniform1f(glGetUniformLocation(oceanShader, "avgTemp"), avgTemp);
-  glUniform3f(glGetUniformLocation(oceanShader, "oceanColor"), oceanColor.x, oceanColor.y, oceanColor.z);
-  glUniformMatrix4fv(glGetUniformLocation(oceanShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
-  glUniformMatrix4fv(glGetUniformLocation(oceanShader, "modelViewMatrix"), 1, GL_TRUE, planetOcean.m);
-  DrawModel(sphere, oceanShader, "inPosition", "inNormal", NULL);
+  //Enabling color write (previously disabled for light POV z-buffer rendering)
+  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
-  printError("display");
+  // Clear previous frame values
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  //Using the projTex shader
+  //Save shadow textures to our planetShader
+  glUseProgram(planetShaderId);
+  glUniform1i(planetShaderUniform, TEX_UNIT);
+  glActiveTexture(GL_TEXTURE0 + TEX_UNIT);
+  glBindTexture(GL_TEXTURE_2D, fbo->depth);
+
+  // Setup the modelview from the camera
+  modelViewMatrix = lookAt(p_camera.x, p_camera.y, p_camera.z,
+                      l_camera.x, l_camera.y, l_camera.z, 0, 1, 0);
+
+  updateCameraMatrix(NULL);
+
+  glDepthFunc(GL_LESS);
+  glCullFace(GL_BACK);
+  drawObjects(planetShaderId);
 
   glutSwapBuffers();
 }
@@ -354,8 +478,122 @@ void reshape(GLsizei w, GLsizei h)
 {
   glViewport(0, 0, w, h);
   GLfloat ratio = (GLfloat) w / (GLfloat) h;
-  projectionMatrix = perspective(90, ratio, 1.0, 1000);
+  projectionMatrix = perspective(30, RENDER_WIDTH/RENDER_HEIGHT, 0.1, 1000);
+}
 
+void processNormalKeys(unsigned char key, int x, int y)
+{
+  // ESC key will close application
+  if (key == 27)
+    exit(0);
+
+  switch(key) {
+    case 'w': {
+      TessLevelInner += 1.0;
+      printf("TessLevelInner: %f\n", TessLevelInner);
+      break;
+    }
+    case 's': {
+      if(TessLevelInner > 1.0) {
+        TessLevelInner -= 1.0;
+        printf("TessLevelInner: %f\n", TessLevelInner);
+      }
+      break;
+    }
+
+    //
+    case '2': {
+      TessLevelOuter1 += 1.0;
+      printf("TessLevelOuter1: %f\n", TessLevelOuter1);
+      break;
+    }
+    case '1': {
+      if(TessLevelOuter1 > 1.0) {
+        TessLevelOuter1 -= 1.0;
+        printf("TessLevelOuter1: %f\n", TessLevelOuter1);
+      }
+      break;
+    }
+
+      //
+    case '4': {
+      TessLevelOuter2 += 1.0;
+      printf("TessLevelOuter2: %f\n", TessLevelOuter2);
+      break;
+    }
+    case '3': {
+      if(TessLevelOuter2 > 1.0) {
+        TessLevelOuter2 -= 1.0;
+        printf("TessLevelOuter2: %f\n", TessLevelOuter2);
+      }
+      break;
+    }
+
+    //
+    case '6': {
+      TessLevelOuter3 += 1.0;
+      printf("TessLevelOuter3: %f\n", TessLevelOuter3);
+      break;
+    }
+    case '5': {
+      if(TessLevelOuter3 > 1.0) {
+        TessLevelOuter3 -= 1.0;
+        printf("TessLevelOuter3: %f\n", TessLevelOuter3);
+      }
+      break;
+    }
+
+    case 'i': {
+      mountAmp += 0.1;
+      printf("Mountain amplitude: %f\n", mountAmp);
+      break;
+    }
+    case 'k': {
+      if(mountAmp > 0){
+        mountAmp -= 0.1;
+        printf("Mountain amplitude: %f\n", mountAmp);
+      }
+      break;
+    }
+    case 'u': {
+      mountFreq += 0.01;
+      printf("Mountain freq: %f\n", mountFreq);
+      break;
+    }
+    case 'j': {
+      if(mountFreq > 0) {
+        mountFreq -= 0.01;
+        printf("Mountain freq: %f\n", mountFreq);
+      }
+      break;
+    }
+    case '0': {
+      lod_factor += 1.0;
+      printf("lod_factor: %f\n", lod_factor);
+      break;
+    }
+    case '9': {
+      if(lod_factor > 0) {
+        lod_factor -= 1.0;
+        printf("lod_factor: %f\n", lod_factor);
+      }
+      break;
+    }
+
+    case 'n': {
+      tessellationFactor += 10;
+      printf("\n tessellationFactor: %i", tessellationFactor);
+      break;
+    }
+    case 'm': {
+      if(tessellationFactor >= 10) {
+        tessellationFactor -= 10;
+        printf("\n tessellationFactor: %i", tessellationFactor);
+      }
+      break;
+    }
+    default:break;
+  }
 }
 
 int main(int argc, char *argv[])
@@ -363,14 +601,28 @@ int main(int argc, char *argv[])
   glutInit(&argc, argv);
 
   glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE | GLUT_STENCIL);
-  glutInitWindowSize(W, H);
+  glutInitWindowSize(RENDER_WIDTH, RENDER_HEIGHT);
 
   glutInitContextVersion(3, 2);
   glutCreateWindow("TSBK03 Project");
-  glutDisplayFunc(display);
+
+  loadShadowShaders();
+  init();
+
+  fbo = initFBO2(RENDER_WIDTH, RENDER_HEIGHT, 0, 1);
+
+  glEnable(GL_DEPTH_TEST);
+  glClearColor(0.0, 0.0, 0.0, 1.0f);
+  glEnable(GL_CULL_FACE);
+
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+
+  glutDisplayFunc(renderScene);
   glutReshapeFunc(reshape);
 
-  init();
+  glutRepeatingTimerFunc(20); // MicroGlut only
+//  glutKeyboardFunc(processNormalKeys); //disable this to get zpr to work
   glutMainLoop();
   exit(0);
 }
